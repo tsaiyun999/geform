@@ -4,13 +4,14 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-// 定義資料格式
+// 👇 加入 category 屬性
 interface Application {
   id: number;
   teacher: string;
   semester: string;
   course: string;
   courseCode: string; 
+  category: string; 
   type: string;
   campus: string;
   time: string;
@@ -22,23 +23,21 @@ export default function DashboardPage() {
   const router = useRouter();
   const [applications, setApplications] = useState<Application[]>([]);
 
-  // 網頁載入時，抓取 Local Storage 的資料
   useEffect(() => {
     const savedData = JSON.parse(localStorage.getItem("nuu_applications") || "[]");
     setApplications(savedData);
   }, []);
 
-  // 匯出功能
+  // 匯出功能 (加入課程類別)
   const handleDownloadExcel = () => {
     if (applications.length === 0) {
       alert("目前沒有任何資料可以下載！");
       return;
     }
 
-    // 設定 CSV 標題列
-    const headers = ["系統編號", "送件日期", "學期", "教師姓名", "科目代碼", "課程名稱", "開設情形", "校區", "上課時間", "審核狀態"];
+    // 👇 標題新增「課程類別」
+    const headers = ["系統編號", "送件日期", "學期", "教師姓名", "科目代碼", "課程名稱", "課程類別", "開設情形", "校區", "上課時間", "審核狀態"];
 
-    // 將資料整理成陣列格式
     const rows = applications.map(app => [
       app.id,
       app.submitDate,
@@ -46,6 +45,7 @@ export default function DashboardPage() {
       app.teacher,
       `"${app.courseCode}"`, 
       `"${app.course}"`, 
+      `"${app.category || '未填寫'}"`, // 👇 加入這行
       app.type,
       app.campus,
       app.time,
@@ -102,7 +102,6 @@ export default function DashboardPage() {
   return (
     <div className="flex min-h-screen font-sans text-gray-200" style={{ backgroundColor: "#121418" }}>
       
-      {/* 側邊欄 */}
       <aside className="w-64 flex-col bg-[#0B0D10] text-white flex shadow-2xl border-r border-gray-800">
         <div className="border-b border-gray-800 p-6 text-xl font-bold tracking-wider text-center text-[#5DADE2]">
           通識中心後台
@@ -119,7 +118,6 @@ export default function DashboardPage() {
         </div>
       </aside>
 
-      {/* 主要內容區 */}
       <main className="flex-1 p-8 overflow-y-auto">
         <header className="mb-10 flex flex-col md:flex-row md:items-center md:justify-between border-b border-gray-800 pb-6">
           <div>
@@ -137,18 +135,17 @@ export default function DashboardPage() {
           </button>
         </header>
 
-        {/* 申請清單資料表 */}
         <div className="rounded-xl border border-gray-800 bg-[#1A1D21] shadow-2xl overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm text-gray-300 border-collapse">
-              {/* 深色表頭 */}
               <thead className="bg-[#0B0D10] text-gray-100">
                 <tr>
                   <th className="border-b border-gray-800 px-5 py-4 font-bold tracking-wider">送件日期</th>
                   <th className="border-b border-gray-800 px-5 py-4 font-bold tracking-wider">學期 / 教師</th>
                   <th className="border-b border-gray-800 px-5 py-4 font-bold tracking-wider">課程名稱</th>
-                  {/* 👇 新增獨立的科目代碼標題 */}
                   <th className="border-b border-gray-800 px-5 py-4 font-bold tracking-wider">科目代碼</th>
+                  {/* 👇 新增標題 */}
+                  <th className="border-b border-gray-800 px-5 py-4 font-bold tracking-wider">課程類別</th>
                   <th className="border-b border-gray-800 px-5 py-4 font-bold tracking-wider">校區 / 時間</th>
                   <th className="border-b border-gray-800 px-5 py-4 font-bold tracking-wider text-center">審核狀態</th>
                   <th className="border-b border-gray-800 px-5 py-4 font-bold tracking-wider text-center">操作</th>
@@ -157,8 +154,8 @@ export default function DashboardPage() {
               <tbody className="divide-y divide-gray-800">
                 {applications.length === 0 ? (
                   <tr>
-                    {/* 👇 因為多了一個欄位，所以 colSpan 從 6 變成 7 */}
-                    <td colSpan={7} className="px-6 py-16 text-center text-gray-500 font-medium">
+                    {/* 👇 增加欄位所以 span 改為 8 */}
+                    <td colSpan={8} className="px-6 py-16 text-center text-gray-500 font-medium">
                       <div className="text-6xl mb-4">📭</div>
                       目前尚未收到任何開課申請。
                     </td>
@@ -173,17 +170,21 @@ export default function DashboardPage() {
                         <span className="block font-bold text-white text-base">{app.teacher}</span>
                         <span className="text-xs text-gray-400 rounded bg-[#2C3E50] px-1.5 py-0.5 inline-block mt-1">{app.semester}</span>
                       </td>
-                      {/* 課程名稱獨立一欄 */}
                       <td className="px-5 py-4 border-r border-gray-800/50">
                         <span className="block font-bold text-[#5DADE2] text-base">{app.course}</span>
                         <span className="inline-block mt-1.5 rounded bg-gray-700 px-2 py-0.5 text-xs text-gray-300">
                           {app.type}
                         </span>
                       </td>
-                      {/* 👇 科目代碼獨立一欄 */}
                       <td className="px-5 py-4 border-r border-gray-800/50">
                         <span className="text-sm font-mono font-medium text-gray-300 bg-gray-800 px-2 py-1 rounded">
                           {app.courseCode}
+                        </span>
+                      </td>
+                      {/* 👇 新增獨立的課程類別欄位 */}
+                      <td className="px-5 py-4 border-r border-gray-800/50">
+                        <span className="text-xs font-medium text-[#5DADE2] bg-[#102A43] border border-[#243B53] px-2 py-1.5 rounded-md whitespace-nowrap inline-block">
+                          {app.category || "未填寫"}
                         </span>
                       </td>
                       <td className="px-5 py-4 whitespace-nowrap border-r border-gray-800/50">

@@ -31,55 +31,49 @@ export default function Home() {
       }
     }
 
-    // 1. 抓取表單內所有的資料
     const formData = new FormData(e.currentTarget);
     const inputTeacher = formData.get("teacher") as string;
     const inputSemester = formData.get("semester") as string;
     const inputCourse = formData.get("course") as string;
-    // 👇 提取使用者選擇的完整時間 (星期 + 節次)
+    // 👇 抓取課程類別
+    const inputCategory = formData.get("category") as string;
     const inputTime = `${day} ${formData.get("time")}`; 
     
-    // 2. 從 Local Storage 拿出歷史資料，準備做比對
     const existingData = JSON.parse(localStorage.getItem("nuu_applications") || "[]");
 
-    // ==========================================
-    // 👇 完美版防重複檢核：加上了 app.time === inputTime
-    // ==========================================
     const isDuplicate = existingData.some(
       (app: any) => 
         app.teacher === inputTeacher && 
         app.semester === inputSemester && 
         app.course === inputCourse &&
-        app.time === inputTime // 同一個老師，同一個學期，"同一個時段"，申請同一門課
+        app.time === inputTime 
     );
 
     if (isDuplicate) {
-      // 警告訊息也更新了，把「時段」加上去讓老師知道哪裡重複
       alert(`⚠️ 錯誤：${inputTeacher} 老師，您已經在 ${inputSemester} 學期「${inputTime}」送出過「${inputCourse}」的申請了，請勿重複填寫！`);
       return; 
     }
 
-    // 3. 整理成一筆新資料物件
+    // 👇 整理資料，把 category (課程類別) 加進去！
     const newApplication = {
       id: Date.now(),
       teacher: inputTeacher,
       semester: inputSemester,
       course: inputCourse,
       courseCode: courseStatus === "曾開設課程" ? courseCode.toUpperCase() : "無",
+      category: inputCategory, // <--- 補上這個欄位
       type: courseStatus,
       campus: formData.get("campus"),
-      time: inputTime, // 使用剛剛組裝好的時間字串
+      time: inputTime, 
       submitDate: new Date().toISOString().split('T')[0],
       status: "審核中" 
     };
 
-    // 4. 將新資料存入 Local Storage
     existingData.push(newApplication);
     localStorage.setItem("nuu_applications", JSON.stringify(existingData));
 
     alert("✅ 申請資料已成功送出！請至後台查看。");
     
-    // 5. 清空表單
     e.currentTarget.reset();
     setCourseStatus("");
     setCourseCategory("");
