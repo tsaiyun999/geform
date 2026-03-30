@@ -35,7 +35,6 @@ export default function Home() {
     const inputTeacher = formData.get("teacher") as string;
     const inputSemester = formData.get("semester") as string;
     const inputCourse = formData.get("course") as string;
-    // 👇 抓取課程類別
     const inputCategory = formData.get("category") as string;
     const inputTime = `${day} ${formData.get("time")}`; 
     
@@ -54,17 +53,20 @@ export default function Home() {
       return; 
     }
 
-    // 👇 整理資料，把 category (課程類別) 加進去！
+    // 👇 整理資料，加入 pc, phone, email 三個欄位！
     const newApplication = {
       id: Date.now(),
       teacher: inputTeacher,
       semester: inputSemester,
       course: inputCourse,
       courseCode: courseStatus === "曾開設課程" ? courseCode.toUpperCase() : "無",
-      category: inputCategory, // <--- 補上這個欄位
+      category: inputCategory, 
       type: courseStatus,
       campus: formData.get("campus"),
       time: inputTime, 
+      pc: formData.get("pc"),       // 新增：電腦教室
+      phone: formData.get("phone"), // 新增：手機號碼
+      email: formData.get("email"), // 新增：電子信箱
       submitDate: new Date().toISOString().split('T')[0],
       status: "審核中" 
     };

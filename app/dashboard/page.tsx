@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-// 👇 加入 category 屬性
+// 👇 加入 pc, phone, email
 interface Application {
   id: number;
   teacher: string;
@@ -15,6 +15,9 @@ interface Application {
   type: string;
   campus: string;
   time: string;
+  pc: string;       // 新增：電腦教室
+  phone: string;    // 新增：手機號碼
+  email: string;    // 新增：電子信箱
   submitDate: string;
   status: string;
 }
@@ -28,27 +31,30 @@ export default function DashboardPage() {
     setApplications(savedData);
   }, []);
 
-  // 匯出功能 (加入課程類別)
+  // 匯出功能 (將所有欄位獨立成行，包含手機與信箱)
   const handleDownloadExcel = () => {
     if (applications.length === 0) {
       alert("目前沒有任何資料可以下載！");
       return;
     }
 
-    // 👇 標題新增「課程類別」
-    const headers = ["系統編號", "送件日期", "學期", "教師姓名", "科目代碼", "課程名稱", "課程類別", "開設情形", "校區", "上課時間", "審核狀態"];
+    // 👇 標題新增手機號碼、電子信箱、電腦教室
+    const headers = ["系統編號", "送件日期", "學期", "教師姓名", "手機號碼", "電子信箱", "科目代碼", "課程名稱", "課程類別", "開設情形", "校區", "上課時間", "電腦教室", "審核狀態"];
 
     const rows = applications.map(app => [
       app.id,
       app.submitDate,
       app.semester,
       app.teacher,
+      `"${app.phone || '未提供'}"`,  // 預防舊資料沒有手機
+      `"${app.email || '未提供'}"`,  // 預防舊資料沒有信箱
       `"${app.courseCode}"`, 
       `"${app.course}"`, 
-      `"${app.category || '未填寫'}"`, // 👇 加入這行
+      `"${app.category || '未填寫'}"`, 
       app.type,
       app.campus,
       app.time,
+      app.pc || '未提供',
       app.status
     ]);
 
@@ -141,12 +147,13 @@ export default function DashboardPage() {
               <thead className="bg-[#0B0D10] text-gray-100">
                 <tr>
                   <th className="border-b border-gray-800 px-5 py-4 font-bold tracking-wider">送件日期</th>
-                  <th className="border-b border-gray-800 px-5 py-4 font-bold tracking-wider">學期 / 教師</th>
+                  {/* 👇 變更標題：整合教師聯絡資訊 */}
+                  <th className="border-b border-gray-800 px-5 py-4 font-bold tracking-wider">教師資訊 (聯絡方式)</th>
                   <th className="border-b border-gray-800 px-5 py-4 font-bold tracking-wider">課程名稱</th>
                   <th className="border-b border-gray-800 px-5 py-4 font-bold tracking-wider">科目代碼</th>
-                  {/* 👇 新增標題 */}
                   <th className="border-b border-gray-800 px-5 py-4 font-bold tracking-wider">課程類別</th>
-                  <th className="border-b border-gray-800 px-5 py-4 font-bold tracking-wider">校區 / 時間</th>
+                  {/* 👇 變更標題：整合電腦教室 */}
+                  <th className="border-b border-gray-800 px-5 py-4 font-bold tracking-wider">校區 / 時間 / 電腦教室</th>
                   <th className="border-b border-gray-800 px-5 py-4 font-bold tracking-wider text-center">審核狀態</th>
                   <th className="border-b border-gray-800 px-5 py-4 font-bold tracking-wider text-center">操作</th>
                 </tr>
@@ -154,7 +161,6 @@ export default function DashboardPage() {
               <tbody className="divide-y divide-gray-800">
                 {applications.length === 0 ? (
                   <tr>
-                    {/* 👇 增加欄位所以 span 改為 8 */}
                     <td colSpan={8} className="px-6 py-16 text-center text-gray-500 font-medium">
                       <div className="text-6xl mb-4">📭</div>
                       目前尚未收到任何開課申請。
@@ -166,10 +172,19 @@ export default function DashboardPage() {
                       <td className="px-5 py-4 text-xs text-gray-500 whitespace-nowrap border-r border-gray-800/50">
                         {app.submitDate}
                       </td>
+                      
+                      {/* 👇 群組化的「教師資訊」區塊：姓名、學期、電話、信箱 */}
                       <td className="px-5 py-4 whitespace-nowrap border-r border-gray-800/50">
-                        <span className="block font-bold text-white text-base">{app.teacher}</span>
-                        <span className="text-xs text-gray-400 rounded bg-[#2C3E50] px-1.5 py-0.5 inline-block mt-1">{app.semester}</span>
+                        <div className="flex flex-col gap-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-white text-base">{app.teacher}</span>
+                            <span className="text-xs text-gray-400 rounded bg-[#2C3E50] px-1.5 py-0.5">{app.semester}</span>
+                          </div>
+                          <span className="text-xs text-gray-400">📞 {app.phone || '未提供'}</span>
+                          <span className="text-xs text-gray-400">✉️ {app.email || '未提供'}</span>
+                        </div>
                       </td>
+
                       <td className="px-5 py-4 border-r border-gray-800/50">
                         <span className="block font-bold text-[#5DADE2] text-base">{app.course}</span>
                         <span className="inline-block mt-1.5 rounded bg-gray-700 px-2 py-0.5 text-xs text-gray-300">
@@ -181,17 +196,24 @@ export default function DashboardPage() {
                           {app.courseCode}
                         </span>
                       </td>
-                      {/* 👇 新增獨立的課程類別欄位 */}
                       <td className="px-5 py-4 border-r border-gray-800/50">
                         <span className="text-xs font-medium text-[#5DADE2] bg-[#102A43] border border-[#243B53] px-2 py-1.5 rounded-md whitespace-nowrap inline-block">
                           {app.category || "未填寫"}
                         </span>
                       </td>
+
+                      {/* 👇 群組化的「時地資訊」區塊：校區、時間、電腦教室 */}
                       <td className="px-5 py-4 whitespace-nowrap border-r border-gray-800/50">
                         <span className="font-medium text-gray-100">{app.campus}校區</span> 
                         <br/> 
                         <span className="text-xs text-gray-400">{app.time}</span>
+                        <br/>
+                        {/* 根據是否需要電腦教室，呈現不同顏色的標籤 */}
+                        <span className={`inline-block mt-1.5 text-xs px-2 py-0.5 rounded ${app.pc === '是' ? 'bg-blue-900/50 text-blue-300 border border-blue-800/50' : 'bg-gray-800 text-gray-400'}`}>
+                          💻 電腦教室: {app.pc || '未提供'}
+                        </span>
                       </td>
+
                       <td className="px-5 py-4 text-center align-middle border-r border-gray-800/50">
                         <button 
                           onClick={() => handleStatusChange(app.id)}
