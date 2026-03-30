@@ -23,20 +23,17 @@ export default function Home() {
   return (
     <>
       <HeaderBanner />
-
       <div className="main-container">
         <div className="form-card">
           {isLoaded && isFormOpen ? (
             <>
-              <InstructionBox />
-              
+              <InstructionBox />  
               <CourseApplicationForm />
             </>
           ) : isLoaded ? (
             <ClosedNotice />
           ) : null}
         </div>
-
         <AdminLoginBox />
       </div>
     </>
