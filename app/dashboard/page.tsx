@@ -4,7 +4,6 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-// 👇 加入 pc, phone, email
 interface Application {
   id: number;
   teacher: string;
@@ -15,9 +14,9 @@ interface Application {
   type: string;
   campus: string;
   time: string;
-  pc: string;       // 新增：電腦教室
-  phone: string;    // 新增：手機號碼
-  email: string;    // 新增：電子信箱
+  pc: string;       
+  phone: string;    
+  email: string;    
   submitDate: string;
   status: string;
 }
@@ -25,54 +24,59 @@ interface Application {
 export default function DashboardPage() {
   const router = useRouter();
   const [applications, setApplications] = useState<Application[]>([]);
+  
+  // 👇 記錄表單狀態的 State
+  const [isFormOpen, setIsFormOpen] = useState(true);
 
   useEffect(() => {
+    // 讀取申請資料
     const savedData = JSON.parse(localStorage.getItem("nuu_applications") || "[]");
     setApplications(savedData);
+
+    // 讀取表單開關狀態 (預設為開放 null -> true)
+    const formStatus = localStorage.getItem("nuu_form_status");
+    if (formStatus === "closed") {
+      setIsFormOpen(false);
+    }
   }, []);
 
-  // 匯出功能 (將所有欄位獨立成行，包含手機與信箱)
+  // ==========================================
+  // 👇 一鍵關閉/開放表單的函數
+  // ==========================================
+  const toggleFormStatus = () => {
+    const newStatus = !isFormOpen;
+    setIsFormOpen(newStatus);
+    
+    if (newStatus) {
+      localStorage.setItem("nuu_form_status", "open");
+      alert("✅ 系統已開放！老師們現在可以填寫申請表單了。");
+    } else {
+      localStorage.setItem("nuu_form_status", "closed");
+      alert("🛑 系統已關閉！前台表單已隱藏，無法再送出新申請。");
+    }
+  };
+
   const handleDownloadExcel = () => {
     if (applications.length === 0) {
       alert("目前沒有任何資料可以下載！");
       return;
     }
-
-    // 👇 標題新增手機號碼、電子信箱、電腦教室
     const headers = ["系統編號", "送件日期", "學期", "教師姓名", "手機號碼", "電子信箱", "科目代碼", "課程名稱", "課程類別", "開設情形", "校區", "上課時間", "電腦教室", "審核狀態"];
-
     const rows = applications.map(app => [
-      app.id,
-      app.submitDate,
-      app.semester,
-      app.teacher,
-      `"${app.phone || '未提供'}"`,  // 預防舊資料沒有手機
-      `"${app.email || '未提供'}"`,  // 預防舊資料沒有信箱
-      `"${app.courseCode}"`, 
-      `"${app.course}"`, 
-      `"${app.category || '未填寫'}"`, 
-      app.type,
-      app.campus,
-      app.time,
-      app.pc || '未提供',
-      app.status
+      app.id, app.submitDate, app.semester, app.teacher,
+      `"${app.phone || '未提供'}"`, `"${app.email || '未提供'}"`,  
+      `"${app.courseCode}"`, `"${app.course}"`, `"${app.category || '未填寫'}"`, 
+      app.type, app.campus, app.time, app.pc || '未提供', app.status
     ]);
-
-    const csvContent = [
-      headers.join(","),
-      ...rows.map(row => row.join(","))
-    ].join("\n");
-
+    const csvContent = [headers.join(","), ...rows.map(row => row.join(","))].join("\n");
     const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
     const blob = new Blob([bom, csvContent], { type: "text/csv;charset=utf-8;" });
-
     const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
     link.setAttribute("href", url);
     link.setAttribute("download", `聯大通識開課申請表_${new Date().toISOString().split('T')[0]}.csv`);
     document.body.appendChild(link);
     link.click();
-    
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
   };
@@ -133,12 +137,24 @@ export default function DashboardPage() {
             </p>
           </div>
           
-          <button 
-            onClick={handleDownloadExcel}
-            className="mt-5 md:mt-0 flex items-center justify-center rounded-lg bg-[#2ECC71] px-8 py-3 font-bold text-white shadow-lg transition-all hover:bg-[#27AE60] hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0"
-          >
-            📥 匯出 Excel 總表 (CSV)
-          </button>
+          {/* 👇 頂部按鈕區 */}
+          <div className="flex gap-4 mt-5 md:mt-0">
+            {/* 開關按鈕 (動態變色) */}
+            <button 
+              onClick={toggleFormStatus}
+              className={`flex items-center justify-center rounded-lg px-6 py-3 font-bold text-white shadow-lg transition-all hover:-translate-y-0.5 active:translate-y-0
+                ${isFormOpen ? 'bg-red-700 hover:bg-red-600' : 'bg-blue-600 hover:bg-blue-500'}`}
+            >
+              {isFormOpen ? "🛑 關閉前台申請" : "✅ 開放前台申請"}
+            </button>
+
+            <button 
+              onClick={handleDownloadExcel}
+              className="flex items-center justify-center rounded-lg bg-[#2ECC71] px-6 py-3 font-bold text-white shadow-lg transition-all hover:bg-[#27AE60] hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0"
+            >
+              📥 匯出 Excel
+            </button>
+          </div>
         </header>
 
         <div className="rounded-xl border border-gray-800 bg-[#1A1D21] shadow-2xl overflow-hidden">
@@ -147,12 +163,10 @@ export default function DashboardPage() {
               <thead className="bg-[#0B0D10] text-gray-100">
                 <tr>
                   <th className="border-b border-gray-800 px-5 py-4 font-bold tracking-wider">送件日期</th>
-                  {/* 👇 變更標題：整合教師聯絡資訊 */}
                   <th className="border-b border-gray-800 px-5 py-4 font-bold tracking-wider">教師資訊 (聯絡方式)</th>
                   <th className="border-b border-gray-800 px-5 py-4 font-bold tracking-wider">課程名稱</th>
                   <th className="border-b border-gray-800 px-5 py-4 font-bold tracking-wider">科目代碼</th>
                   <th className="border-b border-gray-800 px-5 py-4 font-bold tracking-wider">課程類別</th>
-                  {/* 👇 變更標題：整合電腦教室 */}
                   <th className="border-b border-gray-800 px-5 py-4 font-bold tracking-wider">校區 / 時間 / 電腦教室</th>
                   <th className="border-b border-gray-800 px-5 py-4 font-bold tracking-wider text-center">審核狀態</th>
                   <th className="border-b border-gray-800 px-5 py-4 font-bold tracking-wider text-center">操作</th>
@@ -169,11 +183,7 @@ export default function DashboardPage() {
                 ) : (
                   [...applications].reverse().map((app, index) => (
                     <tr key={app.id} className="even:bg-[#16181C] odd:bg-[#1A1D21] hover:bg-[#22262B] transition-colors">
-                      <td className="px-5 py-4 text-xs text-gray-500 whitespace-nowrap border-r border-gray-800/50">
-                        {app.submitDate}
-                      </td>
-                      
-                      {/* 👇 群組化的「教師資訊」區塊：姓名、學期、電話、信箱 */}
+                      <td className="px-5 py-4 text-xs text-gray-500 whitespace-nowrap border-r border-gray-800/50">{app.submitDate}</td>
                       <td className="px-5 py-4 whitespace-nowrap border-r border-gray-800/50">
                         <div className="flex flex-col gap-1">
                           <div className="flex items-center gap-2">
@@ -184,54 +194,28 @@ export default function DashboardPage() {
                           <span className="text-xs text-gray-400">✉️ {app.email || '未提供'}</span>
                         </div>
                       </td>
-
                       <td className="px-5 py-4 border-r border-gray-800/50">
                         <span className="block font-bold text-[#5DADE2] text-base">{app.course}</span>
-                        <span className="inline-block mt-1.5 rounded bg-gray-700 px-2 py-0.5 text-xs text-gray-300">
-                          {app.type}
-                        </span>
+                        <span className="inline-block mt-1.5 rounded bg-gray-700 px-2 py-0.5 text-xs text-gray-300">{app.type}</span>
                       </td>
                       <td className="px-5 py-4 border-r border-gray-800/50">
-                        <span className="text-sm font-mono font-medium text-gray-300 bg-gray-800 px-2 py-1 rounded">
-                          {app.courseCode}
-                        </span>
+                        <span className="text-sm font-mono font-medium text-gray-300 bg-gray-800 px-2 py-1 rounded">{app.courseCode}</span>
                       </td>
                       <td className="px-5 py-4 border-r border-gray-800/50">
-                        <span className="text-xs font-medium text-[#5DADE2] bg-[#102A43] border border-[#243B53] px-2 py-1.5 rounded-md whitespace-nowrap inline-block">
-                          {app.category || "未填寫"}
-                        </span>
+                        <span className="text-xs font-medium text-[#5DADE2] bg-[#102A43] border border-[#243B53] px-2 py-1.5 rounded-md whitespace-nowrap inline-block">{app.category || "未填寫"}</span>
                       </td>
-
-                      {/* 👇 群組化的「時地資訊」區塊：校區、時間、電腦教室 */}
                       <td className="px-5 py-4 whitespace-nowrap border-r border-gray-800/50">
-                        <span className="font-medium text-gray-100">{app.campus}校區</span> 
-                        <br/> 
-                        <span className="text-xs text-gray-400">{app.time}</span>
-                        <br/>
-                        {/* 根據是否需要電腦教室，呈現不同顏色的標籤 */}
-                        <span className={`inline-block mt-1.5 text-xs px-2 py-0.5 rounded ${app.pc === '是' ? 'bg-blue-900/50 text-blue-300 border border-blue-800/50' : 'bg-gray-800 text-gray-400'}`}>
-                          💻 電腦教室: {app.pc || '未提供'}
-                        </span>
+                        <span className="font-medium text-gray-100">{app.campus}校區</span> <br/> 
+                        <span className="text-xs text-gray-400">{app.time}</span><br/>
+                        <span className={`inline-block mt-1.5 text-xs px-2 py-0.5 rounded ${app.pc === '是' ? 'bg-blue-900/50 text-blue-300 border border-blue-800/50' : 'bg-gray-800 text-gray-400'}`}>💻 電腦教室: {app.pc || '未提供'}</span>
                       </td>
-
                       <td className="px-5 py-4 text-center align-middle border-r border-gray-800/50">
-                        <button 
-                          onClick={() => handleStatusChange(app.id)}
-                          className={`rounded-full px-3.5 py-1.5 text-xs font-bold transition-all hover:scale-105 shadow-md inline-block
-                            ${app.status === '已通過' ? 'bg-green-900 text-green-200 border border-green-700' : 
-                              app.status === '退回修改' ? 'bg-red-900 text-red-200 border border-red-700' : 
-                              'bg-[#F39C12] bg-opacity-20 text-[#F39C12] border border-[#F39C12] border-opacity-40'}`}
-                        >
+                        <button onClick={() => handleStatusChange(app.id)} className={`rounded-full px-3.5 py-1.5 text-xs font-bold transition-all hover:scale-105 shadow-md inline-block ${app.status === '已通過' ? 'bg-green-900 text-green-200 border border-green-700' : app.status === '退回修改' ? 'bg-red-900 text-red-200 border border-red-700' : 'bg-[#F39C12] bg-opacity-20 text-[#F39C12] border border-[#F39C12] border-opacity-40'}`}>
                           {app.status} ↺
                         </button>
                       </td>
                       <td className="px-5 py-4 text-center align-middle">
-                        <button 
-                          onClick={() => handleDelete(app.id)} 
-                          className="rounded-lg bg-red-950 px-4 py-2 text-sm font-medium text-red-300 hover:bg-red-900 border border-red-800 transition-colors shadow"
-                        >
-                          刪除
-                        </button>
+                        <button onClick={() => handleDelete(app.id)} className="rounded-lg bg-red-950 px-4 py-2 text-sm font-medium text-red-300 hover:bg-red-900 border border-red-800 transition-colors shadow">刪除</button>
                       </td>
                     </tr>
                   ))

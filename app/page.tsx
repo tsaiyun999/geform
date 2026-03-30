@@ -1,10 +1,15 @@
 "use client";
 
-import React, { useState } from "react";
+// 👇 新增引入 useEffect
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation"; 
 
 export default function Home() {
   const router = useRouter(); 
+
+  // 👇 新增系統狀態控制
+  const [isFormOpen, setIsFormOpen] = useState(true);
+  const [isLoaded, setIsLoaded] = useState(false); // 確保畫面載入完成才顯示，避免畫面閃爍
 
   const [clickCount, setClickCount] = useState(0);       
   const [showAdmin, setShowAdmin] = useState(false);     
@@ -14,6 +19,17 @@ export default function Home() {
   const [courseStatus, setCourseStatus] = useState(""); 
   const [courseCategory, setCourseCategory] = useState(""); 
   const [courseCode, setCourseCode] = useState(""); 
+
+  // ==========================================
+  // 👇 網頁載入時，檢查系統是否開放
+  // ==========================================
+  useEffect(() => {
+    const status = localStorage.getItem("nuu_form_status");
+    if (status === "closed") {
+      setIsFormOpen(false);
+    }
+    setIsLoaded(true); // 檢查完畢，允許渲染畫面
+  }, []);
 
   const handleStatusChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setCourseStatus(e.target.value);
@@ -53,7 +69,6 @@ export default function Home() {
       return; 
     }
 
-    // 👇 整理資料，加入 pc, phone, email 三個欄位！
     const newApplication = {
       id: Date.now(),
       teacher: inputTeacher,
@@ -64,9 +79,9 @@ export default function Home() {
       type: courseStatus,
       campus: formData.get("campus"),
       time: inputTime, 
-      pc: formData.get("pc"),       // 新增：電腦教室
-      phone: formData.get("phone"), // 新增：手機號碼
-      email: formData.get("email"), // 新增：電子信箱
+      pc: formData.get("pc"),       
+      phone: formData.get("phone"), 
+      email: formData.get("email"), 
       submitDate: new Date().toISOString().split('T')[0],
       status: "審核中" 
     };
@@ -134,6 +149,11 @@ export default function Home() {
         .admin-section { margin-top: 80px; text-align: center; border-top: 1px solid #D6EAF8; padding-top: 20px; }
         .admin-trigger-text { color: #BDC3C7; font-size: 11px; cursor: default; user-select: none; }
         .admin-panel { margin-top: 20px; background: #EBF5FB; padding: 30px; border-radius: 12px; border: 1px dashed var(--nuu-blue); }
+        
+        /* 表單關閉的警告樣式 */
+        .closed-notice { text-align: center; padding: 60px 20px; }
+        .closed-notice h2 { color: #E74C3C; font-size: 2em; margin-bottom: 15px; }
+        .closed-notice p { color: #7F8C8D; font-size: 1.1em; }
       `}} />
 
       <div className="header-banner">
@@ -144,93 +164,50 @@ export default function Home() {
 
       <div className="main-container">
         <div className="form-card">
-          <form id="courseForm" onSubmit={handleSubmit}>
-            <div className="form-group"><label className="label required">1. 授課教師姓名</label><input type="text" name="teacher" required /></div>
-            
-            <div className="form-group">
-              <label className="label required">2. 開設學期</label>
-              <select name="semester" required defaultValue="">
-                <option value="" disabled>請選擇學期</option>
-                <option value="116-1">116-1</option>
-                <option value="116-2">116-2</option>
-              </select>
-            </div>
-            
-            <div className="form-group"><label className="label required">3. 課程名稱</label><input type="text" name="course" required /></div>
-            
-            <div className="form-group">
-              <label className="label required">4. 開設情形</label>
-              <div className="radio-group">
-                <label className="radio-item"><input type="radio" name="status" value="新開設課程" required onChange={handleStatusChange} checked={courseStatus === "新開設課程"} /> 新開設課程</label>
-                <label className="radio-item"><input type="radio" name="status" value="曾開設課程" required onChange={handleStatusChange} checked={courseStatus === "曾開設課程"} /> 曾開設課程</label>
+          
+          {/* 👇 判斷表單狀態：開放才顯示表單，關閉則顯示公告 */}
+          {isLoaded && isFormOpen ? (
+            <>
+              <div className="instruction-box">
+                <h3>【填表說明】</h3>
+                <ol>
+                  <li>每學期每一門課程請填寫一份申請，一門課程同一學期開設兩個班需填寫兩份申請。</li>
+                  <li><strong>新課程要求：</strong>請將課程綱要寄至 hsinhua@nuu.edu.tw，格式請參閱附加檔案。</li>
+                  <li><strong>新聘兼任教師：</strong>請寄送履歷表、提聘表、最高學歷影本及課綱至中心。</li>
+                  <li>建議上下學期盡可能開設不同課程，並自行評估學生選課需求。</li>
+                  <li><strong>本校專任教師：</strong>日間部每學期以 2 門(4小時)為限。</li>
+                  <li><strong>申請截止日期：</strong>請於 <strong>116年2月28日</strong> 前完成申請，逾時恕難辦理。</li>
+                </ol>
               </div>
-            </div>
 
-            <div className="form-group">
-              <label className="label required">5. 課程類別</label>
-              <select required name="category" value={courseCategory} onChange={(e) => setCourseCategory(e.target.value)} disabled={courseStatus === ""} >
-                <option value="" disabled>請先選擇上方的「開設情形」</option>
-                <option value="博雅核心-自然科學與應用科技" disabled={courseStatus === "新開設課程"}>博雅核心-自然科學與應用科技</option>
-                <option value="博雅核心-社會經濟與資訊媒體" disabled={courseStatus === "新開設課程"}>博雅核心-社會經濟與資訊媒體</option>
-                <option value="博雅核心-人文藝術與哲學倫理" disabled={courseStatus === "新開設課程"}>博雅核心-人文藝術與哲學倫理</option>
-                <option value="博雅選修-自然">博雅選修-自然</option>
-                <option value="博雅選修-社會">博雅選修-社會</option>
-                <option value="博雅選修-人文">博雅選修-人文</option>
-              </select>
+              <form id="courseForm" onSubmit={handleSubmit}>
+                <div className="form-group"><label className="label required">1. 授課教師姓名</label><input type="text" name="teacher" required /></div>
+                <div className="form-group"><label className="label required">2. 開設學期</label><select name="semester" required defaultValue=""><option value="" disabled>請選擇學期</option><option value="116-1">116-1</option><option value="116-2">116-2</option></select></div>
+                <div className="form-group"><label className="label required">3. 課程名稱</label><input type="text" name="course" required /></div>
+                <div className="form-group"><label className="label required">4. 開設情形</label><div className="radio-group"><label className="radio-item"><input type="radio" name="status" value="新開設課程" required onChange={handleStatusChange} checked={courseStatus === "新開設課程"} /> 新開設課程</label><label className="radio-item"><input type="radio" name="status" value="曾開設課程" required onChange={handleStatusChange} checked={courseStatus === "曾開設課程"} /> 曾開設課程</label></div></div>
+                <div className="form-group"><label className="label required">5. 課程類別</label><select required name="category" value={courseCategory} onChange={(e) => setCourseCategory(e.target.value)} disabled={courseStatus === ""} ><option value="" disabled>請先選擇上方的「開設情形」</option><option value="博雅核心-自然科學與應用科技" disabled={courseStatus === "新開設課程"}>博雅核心-自然科學與應用科技</option><option value="博雅核心-社會經濟與資訊媒體" disabled={courseStatus === "新開設課程"}>博雅核心-社會經濟與資訊媒體</option><option value="博雅核心-人文藝術與哲學倫理" disabled={courseStatus === "新開設課程"}>博雅核心-人文藝術與哲學倫理</option><option value="博雅選修-自然">博雅選修-自然</option><option value="博雅選修-社會">博雅選修-社會</option><option value="博雅選修-人文">博雅選修-人文</option></select></div>
+                <div className="form-group"><label className={`label ${courseStatus === "曾開設課程" ? "required" : ""}`}>6. 科目代碼</label><input type="text" name="code" placeholder="例如: DGGC1234" value={courseCode} onChange={(e) => setCourseCode(e.target.value)} required={courseStatus === "曾開設課程"} disabled={courseStatus === "新開設課程"} /></div>
+                <div className="form-group"><label className="label required">7. 上課星期</label><select required value={day} onChange={(e) => setDay(e.target.value)}><option value="星期一">星期一</option><option value="星期二">星期二</option><option value="星期三">星期三</option><option value="星期四">星期四</option><option value="星期五">星期五</option></select></div>
+                <div className="form-group"><label className="label required">8. 上課時間 (節次)</label><select required name="time" defaultValue="1-2 節"><option value="1-2 節">1-2 節</option><option value="3-4 節">3-4 節</option>{day !== "星期三" && <option value="5-6 節">5-6 節</option>}<option value="7-8 節">7-8 節</option><option value="10-11 節">10-11 節</option></select></div>
+                <div className="form-group"><label className="label required">9. 上課校區</label><div className="radio-group"><label className="radio-item"><input type="radio" name="campus" value="二坪" required /> 二坪校區</label><label className="radio-item"><input type="radio" name="campus" value="八甲" required /> 八甲校區</label></div></div>
+                <div className="form-group"><label className="label required">10. 開設部別</label><div className="radio-group"><label className="radio-item"><input type="radio" name="div" value="日" required /> 日間部</label><label className="radio-item"><input type="radio" name="div" value="進" required /> 進修部</label></div></div>
+                <div className="form-group"><label className="label required">11. 是否於電腦教室授課</label><div className="radio-group"><label className="radio-item"><input type="radio" name="pc" value="是" required /> 是</label><label className="radio-item"><input type="radio" name="pc" value="否" required /> 否</label></div></div>
+                <div className="form-group"><label className="label required">12. 授課教師手機號碼</label><input type="text" name="phone" required placeholder="09xxxxxxxx" /></div>
+                <div className="form-group"><label className="label required">13. 電子信箱 (E-MAIL)</label><input type="email" name="email" required /></div>
+                <button type="submit" className="btn-submit">確認傳送申請資料</button>
+              </form>
+            </>
+          ) : isLoaded ? (
+            // 👇 這是表單關閉時顯示的畫面
+            <div className="closed-notice">
+              <h2>⚠️ 本學期開課申請已截止</h2>
+              <p>目前非通識課程開課申請期間，表單系統已關閉。<br/>如需補件或有任何疑問，請聯繫通識教育中心承辦人員。</p>
             </div>
-            
-            <div className="form-group">
-              <label className={`label ${courseStatus === "曾開設課程" ? "required" : ""}`}>6. 科目代碼</label>
-              <input type="text" name="code" placeholder="例如: DGGC1234" value={courseCode} onChange={(e) => setCourseCode(e.target.value)} required={courseStatus === "曾開設課程"} disabled={courseStatus === "新開設課程"} />
-            </div>
-            
-            <div className="form-group">
-              <label className="label required">7. 上課星期</label>
-              <select required value={day} onChange={(e) => setDay(e.target.value)}>
-                <option value="星期一">星期一</option><option value="星期二">星期二</option><option value="星期三">星期三</option><option value="星期四">星期四</option><option value="星期五">星期五</option>
-              </select>
-            </div>
-            
-            <div className="form-group">
-              <label className="label required">8. 上課時間 (節次)</label>
-              <select required name="time" defaultValue="1-2 節">
-                <option value="1-2 節">1-2 節</option><option value="3-4 節">3-4 節</option>
-                {day !== "星期三" && <option value="5-6 節">5-6 節</option>}
-                <option value="7-8 節">7-8 節</option><option value="10-11 節">10-11 節</option>
-              </select>
-            </div>
-            
-            <div className="form-group">
-              <label className="label required">9. 上課校區</label>
-              <div className="radio-group">
-                <label className="radio-item"><input type="radio" name="campus" value="二坪" required /> 二坪校區</label>
-                <label className="radio-item"><input type="radio" name="campus" value="八甲" required /> 八甲校區</label>
-              </div>
-            </div>
-            
-            <div className="form-group">
-              <label className="label required">10. 開設部別</label>
-              <div className="radio-group">
-                <label className="radio-item"><input type="radio" name="div" value="日" required /> 日間部</label>
-                <label className="radio-item"><input type="radio" name="div" value="進" required /> 進修部</label>
-              </div>
-            </div>
-            
-            <div className="form-group">
-              <label className="label required">11. 是否於電腦教室授課</label>
-              <div className="radio-group">
-                <label className="radio-item"><input type="radio" name="pc" value="是" required /> 是</label>
-                <label className="radio-item"><input type="radio" name="pc" value="否" required /> 否</label>
-              </div>
-            </div>
-            
-            <div className="form-group"><label className="label required">12. 授課教師手機號碼</label><input type="text" name="phone" required placeholder="09xxxxxxxx" /></div>
-            <div className="form-group"><label className="label required">13. 電子信箱 (E-MAIL)</label><input type="email" name="email" required /></div>
+          ) : null}
 
-            <button type="submit" className="btn-submit">確認傳送申請資料</button>
-          </form>
         </div>
 
+        {/* 助理管理區 (即使表單關閉，助理依然可以點這裡登入) */}
         <div className="admin-section">
           <span className="admin-trigger-text" onClick={handleAdminTrigger}>
             © 國立聯合大學通識教育中心
