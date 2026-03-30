@@ -3,13 +3,15 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { supabase } from "@/utils/supabase"; // 👇 引入我們剛剛做好的 Supabase 連線工具
 
+// 👇 配合資料庫，把部分欄位改成底線命名 (course_code, submit_date)
 interface Application {
   id: number;
   teacher: string;
   semester: string;
   course: string;
-  courseCode: string; 
+  course_code: string; 
   category: string; 
   type: string;
   campus: string;
@@ -17,32 +19,42 @@ interface Application {
   pc: string;       
   phone: string;    
   email: string;    
-  submitDate: string;
+  submit_date: string;
   status: string;
 }
 
 export default function DashboardPage() {
   const router = useRouter();
   const [applications, setApplications] = useState<Application[]>([]);
-  
-  // 👇 記錄表單狀態的 State
   const [isFormOpen, setIsFormOpen] = useState(true);
 
-  useEffect(() => {
-    // 讀取申請資料
-    const savedData = JSON.parse(localStorage.getItem("nuu_applications") || "[]");
-    setApplications(savedData);
+  // ==========================================
+  // 👇 1. 從 Supabase 讀取所有資料
+  // ==========================================
+  const fetchApplications = async () => {
+    const { data, error } = await supabase
+      .from("applications")
+      .select("*")
+      .order("id", { ascending: false }); // 讓最新送出的資料排在最上面
 
-    // 讀取表單開關狀態 (預設為開放 null -> true)
+    if (error) {
+      console.error("讀取資料失敗:", error);
+      alert("❌ 無法連線到資料庫，請重新整理頁面。");
+    } else {
+      setApplications(data || []);
+    }
+  };
+
+  useEffect(() => {
+    fetchApplications(); // 網頁載入時立刻去抓資料
+
+    // 表單開關暫時維持放在 LocalStorage
     const formStatus = localStorage.getItem("nuu_form_status");
     if (formStatus === "closed") {
       setIsFormOpen(false);
     }
   }, []);
 
-  // ==========================================
-  // 👇 一鍵關閉/開放表單的函數
-  // ==========================================
   const toggleFormStatus = () => {
     const newStatus = !isFormOpen;
     setIsFormOpen(newStatus);
@@ -63,9 +75,9 @@ export default function DashboardPage() {
     }
     const headers = ["系統編號", "送件日期", "學期", "教師姓名", "手機號碼", "電子信箱", "科目代碼", "課程名稱", "課程類別", "開設情形", "校區", "上課時間", "電腦教室", "審核狀態"];
     const rows = applications.map(app => [
-      app.id, app.submitDate, app.semester, app.teacher,
+      app.id, app.submit_date, app.semester, app.teacher,
       `"${app.phone || '未提供'}"`, `"${app.email || '未提供'}"`,  
-      `"${app.courseCode}"`, `"${app.course}"`, `"${app.category || '未填寫'}"`, 
+      `"${app.course_code}"`, `"${app.course}"`, `"${app.category || '未填寫'}"`, 
       app.type, app.campus, app.time, app.pc || '未提供', app.status
     ]);
     const csvContent = [headers.join(","), ...rows.map(row => row.join(","))].join("\n");
@@ -81,26 +93,46 @@ export default function DashboardPage() {
     URL.revokeObjectURL(url);
   };
 
-  const handleDelete = (id: number) => {
+  // ==========================================
+  // 👇 2. 在 Supabase 刪除資料
+  // ==========================================
+  const handleDelete = async (id: number) => {
     if (window.confirm("⚠️ 確定要刪除這筆開課申請嗎？刪除後無法復原。")) {
-      const updatedApps = applications.filter(app => app.id !== id);
-      setApplications(updatedApps);
-      localStorage.setItem("nuu_applications", JSON.stringify(updatedApps));
+      const { error } = await supabase
+        .from("applications")
+        .delete()
+        .eq("id", id); // 告訴資料庫要刪除哪一筆 ID
+
+      if (error) {
+        alert("❌ 刪除失敗，請稍後再試。");
+      } else {
+        // 刪除成功後，更新畫面
+        setApplications(applications.filter(app => app.id !== id));
+      }
     }
   };
 
-  const handleStatusChange = (id: number) => {
-    const updatedApps = applications.map(app => {
-      if (app.id === id) {
-        let nextStatus = "審核中";
-        if (app.status === "審核中") nextStatus = "已通過";
-        else if (app.status === "已通過") nextStatus = "退回修改";
-        return { ...app, status: nextStatus };
-      }
-      return app;
-    });
-    setApplications(updatedApps);
-    localStorage.setItem("nuu_applications", JSON.stringify(updatedApps));
+  // ==========================================
+  // 👇 3. 在 Supabase 更新審核狀態
+  // ==========================================
+  const handleStatusChange = async (id: number, currentStatus: string) => {
+    let nextStatus = "審核中";
+    if (currentStatus === "審核中") nextStatus = "已通過";
+    else if (currentStatus === "已通過") nextStatus = "退回修改";
+
+    const { error } = await supabase
+      .from("applications")
+      .update({ status: nextStatus })
+      .eq("id", id);
+
+    if (error) {
+      alert("❌ 狀態更新失敗，請稍後再試。");
+    } else {
+      // 更新成功後，同步更新畫面
+      setApplications(applications.map(app => 
+        app.id === id ? { ...app, status: nextStatus } : app
+      ));
+    }
   };
 
   const handleLogout = () => {
@@ -111,7 +143,6 @@ export default function DashboardPage() {
 
   return (
     <div className="flex min-h-screen font-sans text-gray-200" style={{ backgroundColor: "#121418" }}>
-      
       <aside className="w-64 flex-col bg-[#0B0D10] text-white flex shadow-2xl border-r border-gray-800">
         <div className="border-b border-gray-800 p-6 text-xl font-bold tracking-wider text-center text-[#5DADE2]">
           通識中心後台
@@ -136,22 +167,11 @@ export default function DashboardPage() {
               目前共有 <span className="font-bold text-[#5DADE2]">{applications.length}</span> 筆申請資料。
             </p>
           </div>
-          
-          {/* 👇 頂部按鈕區 */}
           <div className="flex gap-4 mt-5 md:mt-0">
-            {/* 開關按鈕 (動態變色) */}
-            <button 
-              onClick={toggleFormStatus}
-              className={`flex items-center justify-center rounded-lg px-6 py-3 font-bold text-white shadow-lg transition-all hover:-translate-y-0.5 active:translate-y-0
-                ${isFormOpen ? 'bg-red-700 hover:bg-red-600' : 'bg-blue-600 hover:bg-blue-500'}`}
-            >
+            <button onClick={toggleFormStatus} className={`flex items-center justify-center rounded-lg px-6 py-3 font-bold text-white shadow-lg transition-all hover:-translate-y-0.5 active:translate-y-0 ${isFormOpen ? 'bg-red-700 hover:bg-red-600' : 'bg-blue-600 hover:bg-blue-500'}`}>
               {isFormOpen ? "🛑 關閉前台申請" : "✅ 開放前台申請"}
             </button>
-
-            <button 
-              onClick={handleDownloadExcel}
-              className="flex items-center justify-center rounded-lg bg-[#2ECC71] px-6 py-3 font-bold text-white shadow-lg transition-all hover:bg-[#27AE60] hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0"
-            >
+            <button onClick={handleDownloadExcel} className="flex items-center justify-center rounded-lg bg-[#2ECC71] px-6 py-3 font-bold text-white shadow-lg transition-all hover:bg-[#27AE60] hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0">
               📥 匯出 Excel
             </button>
           </div>
@@ -177,13 +197,13 @@ export default function DashboardPage() {
                   <tr>
                     <td colSpan={8} className="px-6 py-16 text-center text-gray-500 font-medium">
                       <div className="text-6xl mb-4">📭</div>
-                      目前尚未收到任何開課申請。
+                      目前尚未收到任何雲端申請。
                     </td>
                   </tr>
                 ) : (
-                  [...applications].reverse().map((app, index) => (
+                  applications.map((app) => (
                     <tr key={app.id} className="even:bg-[#16181C] odd:bg-[#1A1D21] hover:bg-[#22262B] transition-colors">
-                      <td className="px-5 py-4 text-xs text-gray-500 whitespace-nowrap border-r border-gray-800/50">{app.submitDate}</td>
+                      <td className="px-5 py-4 text-xs text-gray-500 whitespace-nowrap border-r border-gray-800/50">{app.submit_date}</td>
                       <td className="px-5 py-4 whitespace-nowrap border-r border-gray-800/50">
                         <div className="flex flex-col gap-1">
                           <div className="flex items-center gap-2">
@@ -199,7 +219,7 @@ export default function DashboardPage() {
                         <span className="inline-block mt-1.5 rounded bg-gray-700 px-2 py-0.5 text-xs text-gray-300">{app.type}</span>
                       </td>
                       <td className="px-5 py-4 border-r border-gray-800/50">
-                        <span className="text-sm font-mono font-medium text-gray-300 bg-gray-800 px-2 py-1 rounded">{app.courseCode}</span>
+                        <span className="text-sm font-mono font-medium text-gray-300 bg-gray-800 px-2 py-1 rounded">{app.course_code}</span>
                       </td>
                       <td className="px-5 py-4 border-r border-gray-800/50">
                         <span className="text-xs font-medium text-[#5DADE2] bg-[#102A43] border border-[#243B53] px-2 py-1.5 rounded-md whitespace-nowrap inline-block">{app.category || "未填寫"}</span>
@@ -210,7 +230,8 @@ export default function DashboardPage() {
                         <span className={`inline-block mt-1.5 text-xs px-2 py-0.5 rounded ${app.pc === '是' ? 'bg-blue-900/50 text-blue-300 border border-blue-800/50' : 'bg-gray-800 text-gray-400'}`}>💻 電腦教室: {app.pc || '未提供'}</span>
                       </td>
                       <td className="px-5 py-4 text-center align-middle border-r border-gray-800/50">
-                        <button onClick={() => handleStatusChange(app.id)} className={`rounded-full px-3.5 py-1.5 text-xs font-bold transition-all hover:scale-105 shadow-md inline-block ${app.status === '已通過' ? 'bg-green-900 text-green-200 border border-green-700' : app.status === '退回修改' ? 'bg-red-900 text-red-200 border border-red-700' : 'bg-[#F39C12] bg-opacity-20 text-[#F39C12] border border-[#F39C12] border-opacity-40'}`}>
+                        {/* 👇 注意這裡多傳了一個 currentStatus 進去 */}
+                        <button onClick={() => handleStatusChange(app.id, app.status)} className={`rounded-full px-3.5 py-1.5 text-xs font-bold transition-all hover:scale-105 shadow-md inline-block ${app.status === '已通過' ? 'bg-green-900 text-green-200 border border-green-700' : app.status === '退回修改' ? 'bg-red-900 text-red-200 border border-red-700' : 'bg-[#F39C12] bg-opacity-20 text-[#F39C12] border border-[#F39C12] border-opacity-40'}`}>
                           {app.status} ↺
                         </button>
                       </td>
