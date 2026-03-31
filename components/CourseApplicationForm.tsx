@@ -37,83 +37,89 @@ export default function CourseApplicationForm() {
     setCourseCode("");     
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault(); 
-    const form = e.currentTarget;
+ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  e.preventDefault();
+  const form = e.currentTarget;
+  const formData = new FormData(form);
 
-    // 📍 2. DGGC 格式檢核
-    if (courseStatus === "曾開設課程") {
-      if (!courseCode || !courseCode.toUpperCase().startsWith("DGGC")) {
-        alert("⚠️ 格式錯誤：曾經開設之課程，科目代碼必須以「DGGC」開頭的流水號！");
-        return; 
-      }
+  // --- [第一階段：格式檢核] ---
+  // 📍 DGGC 格式檢核：若為曾開設課程，科目代碼必填且需以 DGGC 開頭
+  if (courseStatus === "曾開設課程") {
+    if (!courseCode || !courseCode.toUpperCase().startsWith("DGGC")) {
+      alert("⚠️ 格式錯誤：曾經開設之課程，科目代碼必須以「DGGC」開頭的流水號！");
+      return; // 🛑 格式不對直接跳出
     }
+  }
 
-    setIsSubmitting(true); 
+  setIsSubmitting(true);
 
-    const formData = new FormData(form);
-    const inputTeacher = formData.get("teacher") as string;
-    const inputSemester = formData.get("semester") as string;
-    const inputCourse = formData.get("course") as string;
-    const inputCategory = formData.get("category") as string;
-    const inputTime = `${day} ${time}`; 
-    
-    // 📍 3. 檢核重複申請：同一教師、學期、課程、時間
+  // 取得本次填寫的關鍵欄位用於重複檢查
+  const inputTeacher = (formData.get("teacher") as string).trim();
+  const inputSemester = formData.get("semester") as string;
+  const inputTime = `${day} ${time}`; // 組合「星期」與「節次」
+
+  try {
+    // --- [第二階段：重複填寫判定] ---
+    // 📍 核心檢查：搜尋資料庫中是否有「學期、教師、時間」完全相同的組合
     const { data: existingData, error: fetchError } = await supabase
       .from("applications")
-      .select("*")
+      .select("id")
       .eq("teacher", inputTeacher)
       .eq("semester", inputSemester)
-      .eq("course", inputCourse)
-      .eq("time", inputTime);
+      .eq("time", inputTime)
+      .limit(1); // 只要找到一筆就夠了
 
-    if (fetchError) {
-      alert("❌ 檢查資料時發生錯誤，請稍後再試！");
-      setIsSubmitting(false);
-      return;
-    }
+    if (fetchError) throw fetchError;
 
     if (existingData && existingData.length > 0) {
-      alert(`⚠️ 提醒您，此課程已完成申請！\n（${inputTeacher} 老師，您在 ${inputSemester} 已送出過「${inputCourse}」於 ${inputTime} 的資料）`);
+      alert(
+        `⚠️ 重複申請提醒！\n\n` +
+        `系統偵測到您（${inputTeacher} 老師）在「${inputSemester}」的「${inputTime}」已經有提交過申請紀錄了。\n\n` +
+        `若需更動資料，請洽通識教育中心管理員，請勿重複填寫。`
+      );
       setIsSubmitting(false);
-      return; 
+      return; // 🛑 重複了，停止存檔
     }
 
-    // 準備存入資料
+    // --- [第三階段：正式存入資料庫] ---
     const newApplication = {
       teacher: inputTeacher,
       semester: inputSemester,
-      course: inputCourse,
+      course: formData.get("course") as string,
       course_code: courseStatus === "曾開設課程" ? courseCode.toUpperCase() : "無",
-      category: inputCategory, 
+      category: formData.get("category") as string,
       type: courseStatus,
       campus: formData.get("campus") as string,
-      division: division, 
-      time: inputTime, 
-      pc: formData.get("pc") as string,       
-      phone: formData.get("phone") as string, 
-      email: formData.get("email") as string, 
+      division: division,
+      time: inputTime,
+      pc: formData.get("pc") as string,
+      phone: formData.get("phone") as string,
+      email: formData.get("email") as string,
       submit_date: new Date().toISOString().split('T')[0],
-      status: "審核中" 
+      status: "審核中"
     };
 
     const { error: insertError } = await supabase.from("applications").insert([newApplication]);
 
-    if (insertError) {
-      alert("❌ 存檔失敗，請聯絡系統管理員！");
-    } else {
-      alert("✅ 申請資料已成功送出並存入雲端！");
-      form.reset(); 
-      setCourseStatus("");
-      setCourseCategory("");
-      setCourseCode("");
-      setDay("星期一");
-      setDivision("日間部");
-      setTime("第1-2節（ＡＭ）");
-    }
-    
-    setIsSubmitting(false); 
-  };
+    if (insertError) throw insertError;
+
+    // --- [第四階段：成功後重置表單] ---
+    alert("✅ 申請資料已成功送出並存入雲端！");
+    form.reset(); 
+    setCourseStatus("");
+    setCourseCategory("");
+    setCourseCode("");
+    setDay("星期一");
+    setDivision("日間部");
+    setTime("第1-2節（ＡＭ）");
+
+  } catch (err) {
+    console.error("提交失敗：", err);
+    alert("❌ 存檔失敗，請聯絡系統管理員！");
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   return (
     <form id="courseForm" onSubmit={handleSubmit} className="space-y-4">
