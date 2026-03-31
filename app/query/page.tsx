@@ -28,7 +28,7 @@ export default function QueryPage() {
             歷年開課紀錄查詢系統
           </h1>
           <p className="text-blue-700/60 font-medium">
-            請輸入教師姓名，即可找回 115 學年度之科目代碼與相關資訊。
+            請輸入教師姓名，即可找回科目代碼與相關資訊。
           </p>
         </div>
 
@@ -43,7 +43,7 @@ export default function QueryPage() {
             <span className="text-blue-500">💡</span> 查詢說明：
           </p>
           <ul className="list-disc list-inside space-y-2 ml-2">
-            <li>本系統包含 115 學年度所有已存檔之通識開課資料。</li>
+            <li>本系統包含 所有已存檔之通識開課資料。</li>
             <li>若您的姓名中有特殊字，請嘗試以常用字或空格進行查詢。</li>
             <li>科目代碼（DGGC 開頭）為 116 學年度申請時之必要填寫資訊。</li>
           </ul>

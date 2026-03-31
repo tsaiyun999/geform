@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { supabase } from "@/utils/supabase";
 
 export default function CourseApplicationForm() {
+  const [activeYear, setActiveYear] = useState("116學年度"); // 預設值，隨後從資料庫更新
   const [day, setDay] = useState("星期一");
   const [division, setDivision] = useState("日間部");
   const [time, setTime] = useState("第1-2節（ＡＭ）");
@@ -11,6 +12,24 @@ export default function CourseApplicationForm() {
   const [courseCategory, setCourseCategory] = useState(""); 
   const [courseCode, setCourseCode] = useState(""); 
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // 📍 1. 自動從資料庫抓取目前「開放中」的學年度
+  useEffect(() => {
+  const fetchActiveYear = async () => {
+    // 📍 策略：抓取「結束時間」最晚的那一筆，這通常就是你剛新增的未來年度 (117)
+    const { data, error } = await supabase
+      .from("system_settings")
+      .select("year_name")
+      .order("end_date", { ascending: false }) 
+      .limit(1)
+      .single();
+
+    if (data && !error) {
+      setActiveYear(data.year_name);
+    }
+  };
+  fetchActiveYear();
+}, []);
 
   const handleStatusChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setCourseStatus(e.target.value);
@@ -22,7 +41,7 @@ export default function CourseApplicationForm() {
     e.preventDefault(); 
     const form = e.currentTarget;
 
-    // 檢核機制：DGGC 判斷
+    // 📍 2. DGGC 格式檢核
     if (courseStatus === "曾開設課程") {
       if (!courseCode || !courseCode.toUpperCase().startsWith("DGGC")) {
         alert("⚠️ 格式錯誤：曾經開設之課程，科目代碼必須以「DGGC」開頭的流水號！");
@@ -37,9 +56,9 @@ export default function CourseApplicationForm() {
     const inputSemester = formData.get("semester") as string;
     const inputCourse = formData.get("course") as string;
     const inputCategory = formData.get("category") as string;
-    const inputTime = `${day} ${time}`; // 星期與節次合併
+    const inputTime = `${day} ${time}`; 
     
-    // 檢核機制：同一教師、學期、課程名稱、星期與時間，視為重複申請
+    // 📍 3. 檢核重複申請：同一教師、學期、課程、時間
     const { data: existingData, error: fetchError } = await supabase
       .from("applications")
       .select("*")
@@ -60,7 +79,7 @@ export default function CourseApplicationForm() {
       return; 
     }
 
-    // 準備存入資料 (將部別與校區合併存入 campus 欄位)
+    // 準備存入資料
     const newApplication = {
       teacher: inputTeacher,
       semester: inputSemester,
@@ -68,7 +87,7 @@ export default function CourseApplicationForm() {
       course_code: courseStatus === "曾開設課程" ? courseCode.toUpperCase() : "無",
       category: inputCategory, 
       type: courseStatus,
-      campus: formData.get("campus") as string,  // 📍 恢復只存校區
+      campus: formData.get("campus") as string,
       division: division, 
       time: inputTime, 
       pc: formData.get("pc") as string,       
@@ -98,9 +117,27 @@ export default function CourseApplicationForm() {
 
   return (
     <form id="courseForm" onSubmit={handleSubmit} className="space-y-4">
-      <div className="form-group"><label className="label required">1. 授課教師姓名</label><input type="text" name="teacher" required placeholder="請詳答" /></div>
-      <div className="form-group"><label className="label required">2. 開設學期 (每學期每門課填一份)</label><select name="semester" required defaultValue=""><option value="" disabled>請選擇學期</option><option value="116學年度第1學期">116學年度第1學期</option><option value="116學年度第2學期">116學年度第2學期</option></select></div>
-      <div className="form-group"><label className="label required">3. 課程名稱 (曾開設請填寫正確完整名稱)</label><input type="text" name="course" required placeholder="請詳答" /></div>
+      {/* 標題連動 */}
+     
+
+      <div className="form-group">
+        <label className="label required">1. 授課教師姓名</label>
+        <input type="text" name="teacher" required placeholder="請詳答" />
+      </div>
+
+      <div className="form-group">
+        <label className="label required">2. 開設學期 (每學期每門課填一份)</label>
+        <select name="semester" required defaultValue="">
+          <option value="" disabled>請選擇學期</option>
+          <option value={`${activeYear}第1學期`}>{activeYear}第1學期</option>
+          <option value={`${activeYear}第2學期`}>{activeYear}第2學期</option>
+        </select>
+      </div>
+
+      <div className="form-group">
+        <label className="label required">3. 課程名稱 (曾開設請填寫正確完整名稱)</label>
+        <input type="text" name="course" required placeholder="請詳答" />
+      </div>
       
       <div className="form-group">
         <label className="label required">4. 開設情形</label>
@@ -114,6 +151,7 @@ export default function CourseApplicationForm() {
         <label className="label required">5. 課程類別 (新開設限勾選博雅選修)</label>
         <select required name="category" value={courseCategory} onChange={(e) => setCourseCategory(e.target.value)} disabled={courseStatus === ""} >
           <option value="" disabled>請先選擇上方的「開設情形」</option>
+          {/* 📍 曾開設才能選核心，新開設則 disabled */}
           <option value="博雅核心-自然科學與應用科技" disabled={courseStatus === "新開設課程"}>博雅核心-自然科學與應用科技</option>
           <option value="博雅核心-社會經濟與資訊媒體" disabled={courseStatus === "新開設課程"}>博雅核心-社會經濟與資訊媒體</option>
           <option value="博雅核心-人文藝術與哲學倫理" disabled={courseStatus === "新開設課程"}>博雅核心-人文藝術與哲學倫理</option>
@@ -123,7 +161,24 @@ export default function CourseApplicationForm() {
         </select>
       </div>
       
-      <div className="form-group"><label className={`label ${courseStatus === "曾開設課程" ? "required" : ""}`}>6. 科目代碼 (曾開設課程必填)</label><input type="text" name="code" placeholder="請填寫 DGGC 開頭的流水號" value={courseCode} onChange={(e) => setCourseCode(e.target.value)} required={courseStatus === "曾開設課程"} disabled={courseStatus === "新開設課程"} /></div>
+      <div className="form-group">
+        <label className={`label ${courseStatus === "曾開設課程" ? "required text-blue-600 font-bold" : "text-gray-400"}`}>
+          6. 科目代碼 (曾開設課程必填)
+        </label>
+        <input 
+          type="text" 
+          name="code" 
+          placeholder={courseStatus === "曾開設課程" ? "請填寫 DGGC 開頭的流水號" : "新課程無需填寫"} 
+          value={courseCode} 
+          onChange={(e) => setCourseCode(e.target.value)} 
+          required={courseStatus === "曾開設課程"} 
+          disabled={courseStatus === "新開設課程"}
+          className={courseStatus === "新開設課程" ? "bg-gray-100" : ""}
+        />
+        {courseStatus === "曾開設課程" && (
+          <p className="text-[10px] text-blue-500 mt-1 italic">提示：可至首頁下方查詢歷年代碼</p>
+        )}
+      </div>
       
       <div className="form-group">
         <label className="label required">7. 上課星期 (星期三 5、6 節不得排課)</label>
@@ -132,7 +187,13 @@ export default function CourseApplicationForm() {
         </select>
       </div>
 
-      <div className="form-group"><label className="label required">8. 開設部別</label><div className="radio-group"><label className="radio-item"><input type="radio" name="div" value="日間部" required checked={division === "日間部"} onChange={(e) => { setDivision(e.target.value); setTime("第1-2節（ＡＭ）"); }} /> 日間部</label><label className="radio-item"><input type="radio" name="div" value="進修部" required checked={division === "進修部"} onChange={(e) => { setDivision(e.target.value); setTime("第1-2節（ＡＭ）"); }} /> 進修部</label></div></div>
+      <div className="form-group">
+        <label className="label required">8. 開設部別</label>
+        <div className="radio-group">
+          <label className="radio-item"><input type="radio" name="div" value="日間部" required checked={division === "日間部"} onChange={(e) => { setDivision(e.target.value); setTime("第1-2節（ＡＭ）"); }} /> 日間部</label>
+          <label className="radio-item"><input type="radio" name="div" value="進修部" required checked={division === "進修部"} onChange={(e) => { setDivision(e.target.value); setTime("第1-2節（ＡＭ）"); }} /> 進修部</label>
+        </div>
+      </div>
       
       <div className="form-group">
         <label className="label required">9. 上課時間 (日間部不得晚於下午6時)</label>
@@ -151,14 +212,39 @@ export default function CourseApplicationForm() {
         </select>
       </div>
 
-      <div className="form-group"><label className="label required">10. 上課校區</label><div className="radio-group"><label className="radio-item"><input type="radio" name="campus" value="二坪校區" required /> 二坪校區</label><label className="radio-item"><input type="radio" name="campus" value="八甲校區" required /> 八甲校區</label></div></div>
-      <div className="form-group"><label className="label required">11. 是否於電腦教室授課 (學生每人1台電腦)</label><div className="radio-group"><label className="radio-item"><input type="radio" name="pc" value="是" required /> 是</label><label className="radio-item"><input type="radio" name="pc" value="否" required /> 否</label></div></div>
-      <div className="form-group"><label className="label required">12. 授課教師手機號碼</label><input type="text" name="phone" required placeholder="請詳答" /></div>
-      <div className="form-group"><label className="label required">13. 電子信箱 (E-MAIL)</label><input type="email" name="email" required placeholder="請詳答" /></div>
+      <div className="form-group">
+        <label className="label required">10. 上課校區</label>
+        <div className="radio-group">
+          <label className="radio-item"><input type="radio" name="campus" value="二坪校區" required /> 二坪校區</label>
+          <label className="radio-item"><input type="radio" name="campus" value="八甲校區" required /> 八甲校區</label>
+        </div>
+      </div>
+
+      <div className="form-group">
+        <label className="label required">11. 是否於電腦教室授課 (學生每人1台電腦)</label>
+        <div className="radio-group">
+          <label className="radio-item"><input type="radio" name="pc" value="是" required /> 是</label>
+          <label className="radio-item"><input type="radio" name="pc" value="否" required /> 否</label>
+        </div>
+      </div>
+
+      <div className="form-group">
+        <label className="label required">12. 授課教師手機號碼</label>
+        <input type="text" name="phone" required placeholder="請詳答" />
+      </div>
+
+      <div className="form-group">
+        <label className="label required">13. 電子信箱 (E-MAIL)</label>
+        <input type="email" name="email" required placeholder="請詳答" />
+      </div>
 
       <button type="submit" className="btn-submit" disabled={isSubmitting}>
-        {isSubmitting ? "資料傳送中..." : "確認傳送申請資料"}
+        {isSubmitting ? "正在檢查資料並傳送..." : "確認傳送申請資料"}
       </button>
+
+      <p className="text-center text-[10px] text-gray-400 mt-4">
+        ※ 送出前請確認資料正確性，若重複送出系統將會提醒您。
+      </p>
     </form>
   );
 }
