@@ -11,7 +11,8 @@ import ApplicationTable, { Application } from "@/components/ApplicationTable";
 export default function DashboardPage() {
   const [applications, setApplications] = useState<Application[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(true);
-
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   // 1. 讀取資料邏輯
   const fetchApplications = async () => {
     const { data, error } = await supabase
@@ -26,7 +27,26 @@ export default function DashboardPage() {
       setApplications(data || []);
     }
   };
+  // 讀取設定的邏輯
+const fetchSettings = async () => {
+  const { data } = await supabase.from("system_settings").select("*").single();
+  if (data) {
+    // 轉換為 input type="datetime-local" 需要的格式
+    setStartDate(new Date(data.start_date).toISOString().slice(0, 16));
+    setEndDate(new Date(data.end_date).toISOString().slice(0, 16));
+  }
+};
 
+// 更新設定的邏輯
+const updateSchedule = async () => {
+  const { error } = await supabase.from("system_settings").update({
+    start_date: startDate,
+    end_date: endDate
+  }).eq("id", 1);
+  
+  if (error) alert("更新失敗");
+  else alert("✅ 自動排程已更新！系統將在設定時間內自動開放。");
+};
   useEffect(() => {
     fetchApplications();
     const formStatus = localStorage.getItem("nuu_form_status");
@@ -143,24 +163,26 @@ export default function DashboardPage() {
     else setApplications(applications.map(app => app.id === id ? { ...app, status: nextStatus } : app));
   };
 
-  // ==========================================
-  // 🌟 最終的完美排版！
-  // ==========================================
+
   return (
     <div className="flex min-h-screen font-sans text-gray-200" style={{ backgroundColor: "#121418" }}>
-      {/* 積木 1：側邊欄 */}
+      
       <Sidebar />
 
       <main className="flex-1 p-8 overflow-y-auto">
-        {/* 積木 2：頂部控制面板 */}
+        
         <DashboardHeader 
           applicationsCount={applications.length} 
           isFormOpen={isFormOpen} 
           toggleFormStatus={toggleFormStatus} 
           handleDownloadExcel={handleDownloadExcel} 
+          startDate={startDate}
+          endDate={endDate}
+          setStartDate={setStartDate}
+          setEndDate={setEndDate}
+          updateSchedule={updateSchedule}
         />
 
-        {/* 積木 3：資料表格大魔王 */}
         <ApplicationTable 
           applications={applications} 
           handleStatusChange={handleStatusChange} 

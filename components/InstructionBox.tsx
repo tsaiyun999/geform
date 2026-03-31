@@ -3,7 +3,7 @@ import React from "react";
 export default function InstructionBox() {
   return (
     <div className="instruction-box">
-      <h3>【填表說明】</h3>
+      <h3>【填表說明 </h3>
       <ol>
         <li>每學期每一門課程請填寫一份申請，一門課程同一學期開設兩個班需填寫兩份申請。</li>
         <li><strong>新課程要求：</strong>若有新開設的課程，請於申請期限內寄送本校統一格式課程綱要至 hsinhua@nuu.edu.tw，新課程依規定須通過中心、共教會二級審查始得開課，格式請參閱附加檔案。</li>
