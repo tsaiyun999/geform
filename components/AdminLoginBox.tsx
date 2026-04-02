@@ -46,7 +46,7 @@ export default function AdminLoginBox() {
           <input 
             type="password" 
             style={{ padding: "10px", borderRadius: "5px", border: "1px solid #CCC", marginRight: "10px" }} 
-            placeholder="輸入管理密碼 (預設:admin123)"
+            placeholder="輸入管理密碼 "
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />

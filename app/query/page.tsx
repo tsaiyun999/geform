@@ -45,7 +45,7 @@ export default function QueryPage() {
           <ul className="list-disc list-inside space-y-2 ml-2">
             <li>本系統包含 所有已存檔之通識開課資料。</li>
             <li>若您的姓名中有特殊字，請嘗試以常用字或空格進行查詢。</li>
-            <li>科目代碼（DGGC 開頭）為 116 學年度申請時之必要填寫資訊。</li>
+            <li>科目代碼（DGGC 開頭）申請時之必要填寫資訊。</li>
           </ul>
         </div>
       </main>

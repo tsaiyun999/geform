@@ -93,18 +93,11 @@ export default function Home() {
               <CourseApplicationForm />
             </>
           ) : (
-            /* 🔴 系統關閉時：顯示關閉公告 */
             <ClosedNotice />
           )}
         </div>
-
-        
-
-        {/* 管理員登入入口 */}
         <AdminLoginBox />
       </div>
-
-      
     </>
   );
 }
