@@ -8,6 +8,7 @@ import ApplicationTable, { Application } from "@/components/ApplicationTable";
 import {  downloadApplicationsAsExcel } from "@/utils/excelHelper";
 import { useSystemSettings } from "@/hooks/useSystemSettings"; // 📍 引入設定 Hook
 import { useApplications } from "@/hooks/useApplications";     // 📍 引入資料 Hook
+import Link from "next/link";
 
 export default function DashboardPage() {
   // 📍 1. 新增登入驗證的 State
@@ -71,23 +72,23 @@ export default function DashboardPage() {
   // 🔒 如果尚未登入，顯示「後台登入畫面」
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#E5EDFD] p-4 font-sans">
-  {/* 📍 1. 卡片：改成白色背景，淡藍色邊框，更柔和的亮色陰影 */}
-  <div className="bg-white p-10 rounded-3xl shadow-xl max-w-sm w-full border border-[#DCE8FC]">
+      <div className="min-h-screen flex items-center justify-center bg-[#FFF5F7] p-4 font-sans">
+  {/* 📍 1. 卡片：奶油白背景，淡淡的莓果粉邊框，更柔和的亮色陰影 */}
+  <div className="bg-[#FEFDFB] p-10 rounded-3xl shadow-xl max-w-sm w-full border border-[#F1E4E8]">
     <div className="text-center mb-8">
-      {/* 📍 2. 圖示背景：改成極淡的藍色圓圈 */}
-      <div className="w-20 h-20 bg-[#F0F7FF] rounded-full flex items-center justify-center mx-auto mb-4 border border-[#E1EEFF]">
+      {/* 📍 2. 圖示背景：改成淡檸檬黃圓圈，看起來像布丁一樣可愛 */}
+      <div className="w-20 h-20 bg-[#FFFBEB] rounded-full flex items-center justify-center mx-auto mb-4 border border-[#FFF3B0]">
         <span className="text-5xl block">🛡️</span>
       </div>
       
-      {/* 📍 3. 標題與文字：改成深灰色，確保亮色背景下的清晰度 */}
-      <h1 className="text-2xl font-extrabold text-[#1A365D]">通識中心後台管理</h1>
-      <p className="text-gray-500 text-sm mt-2">請輸入管理員密碼以進入系統</p>
+      {/* 📍 3. 標題與文字：改為可可棕，這在馬卡龍色調中比藍色更和諧 */}
+      <h1 className="text-2xl font-extrabold text-[#604D53] tracking-tight">通識中心後台管理</h1>
+      <p className="text-[#8A767C] text-sm mt-2 font-medium">請輸入密碼進入系統</p>
     </div>
     
     <form onSubmit={handleLogin} className="space-y-5">
       <div>
-        {/* 📍 4. 密碼輸入框：改成淡灰底、淡藍邊框、深色文字，並加強 focus 效果 */}
+        {/* 📍 4. 密碼輸入框：櫻花粉底、莓果粉邊框、可可棕字，focus 時會發出粉藍色光輝 */}
         <input
           type="password"
           placeholder="••••••••"
@@ -96,26 +97,26 @@ export default function DashboardPage() {
             setPasswordInput(e.target.value);
             setErrorMsg("");
           }}
-          className="w-full bg-[#F7FAFC] border border-[#E2E8F0] rounded-xl px-4 py-4 text-[#1A365D] focus:outline-none focus:ring-2 focus:ring-[#3182CE] focus:bg-white focus:border-[#3182CE] transition-all text-center tracking-[0.5em] text-xl placeholder:tracking-normal placeholder:text-gray-300"
+          className="w-full bg-[#FFF0F3] border border-[#F9D5E5] rounded-xl px-4 py-4 text-[#604D53] focus:outline-none focus:ring-2 focus:ring-[#B8E2F2] focus:bg-white focus:border-[#B8E2F2] transition-all text-center tracking-[0.5em] text-xl placeholder:tracking-normal placeholder:text-[#C4B5B9]"
           required
           autoFocus
         />
-        {/* 📍 5. 錯誤訊息：在白底上改成亮紅色，更好辨識 */}
-        {errorMsg && <p className="text-[#E53E3E] text-sm mt-2.5 text-center font-medium">{errorMsg}</p>}
+        {/* 📍 5. 錯誤訊息：在白底上改成珊瑚橘，柔和但不失警示作用 */}
+        {errorMsg && <p className="text-[#FF9E7D] text-sm mt-2.5 text-center font-medium">{errorMsg}</p>}
       </div>
       
-      {/* 📍 6. 登入按鈕：改成符合藍白主題的深藍色按鈕 */}
+      {/* 📍 6. 登入按鈕：改成莓果粉色 (Berry Pink) */}
       <button 
         type="submit"
-        className="w-full bg-[#3182CE] hover:bg-[#2B6CB0] text-white font-bold py-4 rounded-xl transition-all shadow-md hover:shadow-lg active:scale-95"
+        className="w-full bg-[#F9D5E5] hover:bg-[#F2B6D2] text-[#604D53] font-bold py-4 rounded-xl transition-all shadow-md hover:shadow-lg hover:shadow-[#F9D5E5]/30 active:scale-95"
       >
         登入系統
       </button>
     </form>
     
-    {/* 📍 7. 底部裝飾 (選配)：加一點版權或裝飾文字 */}
-    <p className="mt-8 text-center text-gray-400 text-xs">
-      國立聯合大學 通識教育中心
+    {/* 📍 7. 底部裝飾：溫暖的淺粉棕色 */}
+    <p className="mt-8 text-center text-[#C4B5B9] text-xs font-medium">
+      國立聯合大學 通識教育中心 🍓
     </p>
   </div>
 </div>
@@ -147,7 +148,13 @@ export default function DashboardPage() {
           <span className="flex h-2 w-2 rounded-full bg-[#3182CE]"></span>
           正在管理：{currentYear}
         </div>
-
+        <Link 
+    href="/dashboard/past-courses" 
+    className="inline-flex items-center gap-2 bg-[#E6FFFA] text-[#2C7A7B] px-4 py-1.5 rounded-full text-xs font-bold border border-[#B2F5EA] shadow-sm hover:bg-[#B2F5EA] transition-all active:scale-95 group"
+  >
+    <span className="group-hover:rotate-12 transition-transform">📚</span>
+    進入歷年資料管理庫
+  </Link>
         <DashboardHeader 
           applicationsCount={applications.length} 
           isFormOpen={isFormOpen} 
