@@ -40,7 +40,7 @@ export default function CourseQuery() {
       <h3 className="text-2xl font-black text-gray-900 mb-2 flex items-center gap-2">
         <span className="text-[#3498DB]">🔍</span> 歷年代碼查詢
       </h3>
-      <p className="text-gray-500 text-sm mb-8">輸入姓名即可找回 115 學年度之科目代碼</p>
+      <p className="text-gray-500 text-sm mb-8">輸入姓名即可找回科目代碼</p>
 
       {/* 查詢輸入區 */}
       <div className="space-y-6">

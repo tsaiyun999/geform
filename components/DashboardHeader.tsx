@@ -27,38 +27,68 @@ export default function DashboardHeader({
   updateSchedule
 }: DashboardHeaderProps) {
   return (
-    <header className="mb-10 flex flex-col md:flex-row md:items-center md:justify-between border-b border-gray-800 pb-6">
-      <div>
-        <h1 className="text-4xl font-extrabold text-white tracking-tight">資料管理面板</h1>
-        <p className="mt-3 text-lg text-gray-400">
-          目前共有 <span className="font-bold text-[#5DADE2]">{applicationsCount}</span> 筆申請資料。
-        </p>
-      </div>
-      <div className="bg-gray-800 p-4 rounded-lg mb-6 flex gap-4 items-end">
-  <div>
-    <label className="block text-xs text-gray-400 mb-1">自動開啟時間</label>
-    <input type="datetime-local" value={startDate} onChange={e => setStartDate(e.target.value)} className="bg-gray-700 text-white p-2 rounded" />
+    <header className="mb-10 flex flex-col lg:flex-row lg:items-center lg:justify-between border-b border-[#F1E4E8] pb-8 gap-6 text-[#604D53]">
+  
+  {/* 📍 1. 左側標題區：改為可可棕文字與粉藍裝飾 */}
+  <div className="flex-shrink-0">
+    <h1 className="text-3xl font-extrabold text-[#604D53] tracking-tight">資料管理面板</h1>
+    <p className="mt-2 text-[#8A767C] font-medium">
+      目前共有 <span className="font-bold text-[#604D53] bg-[#EBF8FF] px-2 py-0.5 rounded-md border border-[#B8E2F2]">{applicationsCount}</span> 筆申請資料。
+    </p>
   </div>
-  <div>
-    <label className="block text-xs text-gray-400 mb-1">自動關閉時間</label>
-    <input type="datetime-local" value={endDate} onChange={e => setEndDate(e.target.value)} className="bg-gray-700 text-white p-2 rounded" />
+
+  {/* 📍 2. 中間排程設定區：奶油白底、粉藍邊框 */}
+  <div className="bg-[#FEFDFB] p-5 rounded-2xl border border-[#B8E2F2] shadow-sm shadow-[#B8E2F2]/20 flex flex-col sm:flex-row gap-4 items-end flex-grow max-w-4xl">
+    <div className="w-full sm:w-auto flex-1">
+      <label className="block text-xs font-bold text-[#8A767C] mb-1.5 ml-1 flex items-center gap-1">
+        <span className="text-[#B8E2F2]">🕒</span> 自動開啟時間
+      </label>
+      <input 
+        type="datetime-local" 
+        value={startDate} 
+        onChange={e => setStartDate(e.target.value)} 
+        className="w-full bg-[#FFF5F7] border border-[#F9D5E5] text-[#604D53] p-2.5 rounded-xl focus:ring-2 focus:ring-[#B8E2F2] focus:border-[#B8E2F2] focus:outline-none transition-all text-sm" 
+      />
+    </div>
+    <div className="w-full sm:w-auto flex-1">
+      <label className="block text-xs font-bold text-[#8A767C] mb-1.5 ml-1 flex items-center gap-1">
+        <span className="text-[#F9D5E5]">⌛</span> 自動關閉時間
+      </label>
+      <input 
+        type="datetime-local" 
+        value={endDate} 
+        onChange={e => setEndDate(e.target.value)} 
+        className="w-full bg-[#FFF5F7] border border-[#F9D5E5] text-[#604D53] p-2.5 rounded-xl focus:ring-2 focus:ring-[#B8E2F2] focus:border-[#B8E2F2] focus:outline-none transition-all text-sm" 
+      />
+    </div>
+    <button 
+      onClick={updateSchedule} 
+      className="w-full sm:w-auto bg-[#B8E2F2] hover:bg-[#A3D8EC] text-[#604D53] px-6 py-2.5 rounded-xl font-bold shadow-md shadow-[#B8E2F2]/30 transition-all active:scale-95 whitespace-nowrap border border-[#B8E2F2]"
+    >
+      儲存排程
+    </button>
   </div>
-  <button onClick={updateSchedule} className="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded font-bold">儲存排程</button>
-</div>
-      <div className="flex gap-4 mt-5 md:mt-0">
-        <button 
-          onClick={toggleFormStatus} 
-          className={`flex items-center justify-center rounded-lg px-6 py-3 font-bold text-white shadow-lg transition-all hover:-translate-y-0.5 active:translate-y-0 ${isFormOpen ? 'bg-red-700 hover:bg-red-600' : 'bg-blue-600 hover:bg-blue-500'}`}
-        >
-          {isFormOpen ? "🛑 關閉前台申請" : "✅ 開放前台申請"}
-        </button>
-        <button 
-          onClick={handleDownloadExcel} 
-          className="flex items-center justify-center rounded-lg bg-[#2ECC71] px-6 py-3 font-bold text-white shadow-lg transition-all hover:bg-[#27AE60] hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0"
-        >
-          📥 匯出 Excel
-        </button>
-      </div>
-    </header>
+
+  {/* 📍 3. 右側按鈕區：莓果粉與薄荷綠按鈕 */}
+  <div className="flex flex-row gap-4 flex-shrink-0">
+    <button 
+      onClick={toggleFormStatus} 
+      className={`flex-1 sm:flex-none flex items-center justify-center rounded-xl px-6 py-3 font-bold text-[#604D53] shadow-md transition-all hover:-translate-y-0.5 active:translate-y-0 border ${
+        isFormOpen 
+          ? 'bg-[#FFD1BA] border-[#FFB38A] hover:bg-[#FFC0A1] shadow-[#FFD1BA]/40' // 珊瑚橙
+          : 'bg-[#C7E9C0] border-[#9AE6B4] hover:bg-[#B3DEAB] shadow-[#C7E9C0]/40' // 薄荷綠
+      }`}
+    >
+      {isFormOpen ? "🛑 關閉申請" : "✅ 開放申請"}
+    </button>
+    
+    <button 
+      onClick={handleDownloadExcel} 
+      className="flex-1 sm:flex-none flex items-center justify-center rounded-xl bg-[#F9D5E5] border-[#F2B6D2] px-6 py-3 font-bold text-[#604D53] shadow-md shadow-[#F9D5E5]/40 transition-all hover:bg-[#F2B6D2] hover:-translate-y-0.5 active:translate-y-0"
+    >
+      📥 匯出 Excel
+    </button>
+  </div>
+</header>
   );
 }

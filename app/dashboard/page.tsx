@@ -5,7 +5,7 @@ import { supabase } from "@/utils/supabase";
 import Sidebar from "@/components/DashboardSidebar";
 import DashboardHeader from "@/components/DashboardHeader";
 import ApplicationTable, { Application } from "@/components/ApplicationTable";
-import { downloadApplicationsAsCsv } from "@/utils/excelHelper";
+import {  downloadApplicationsAsExcel } from "@/utils/excelHelper";
 import { useSystemSettings } from "@/hooks/useSystemSettings"; // 📍 引入設定 Hook
 import { useApplications } from "@/hooks/useApplications";     // 📍 引入資料 Hook
 
@@ -62,73 +62,90 @@ export default function DashboardPage() {
 
   const handleDownloadExcel = () => {
     // 📍 直接呼叫外部工具，並傳入當前資料與年度
-    downloadApplicationsAsCsv(applications, currentYear);
+    downloadApplicationsAsExcel(applications, currentYear);
   };
 
   // 🔒 如果還在檢查狀態，顯示空白防閃爍
-  if (isCheckingSession) return <div className="min-h-screen bg-[#121418]"></div>;
+  if (isCheckingSession) return <div className="min-h-screen bg-[#cbdaf8]"></div>;
 
   // 🔒 如果尚未登入，顯示「後台登入畫面」
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#121418] text-white p-4">
-        <div className="bg-gray-800 p-8 rounded-2xl shadow-2xl max-w-sm w-full border border-gray-700">
-          <div className="text-center mb-6">
-            <span className="text-5xl block mb-2">🛡️</span>
-            <h1 className="text-2xl font-bold text-[#5DADE2]">通識中心後台管理</h1>
-            <p className="text-gray-400 text-sm mt-2">請輸入管理員密碼以進入系統</p>
-          </div>
-          
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div>
-              <input
-                type="password"
-                placeholder="請輸入密碼"
-                value={passwordInput}
-                onChange={(e) => {
-                  setPasswordInput(e.target.value);
-                  setErrorMsg("");
-                }}
-                className="w-full bg-gray-900 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#5DADE2] text-center tracking-widest"
-                required
-                autoFocus
-              />
-              {errorMsg && <p className="text-red-400 text-sm mt-2 text-center">{errorMsg}</p>}
-            </div>
-            <button 
-              type="submit"
-              className="w-full bg-[#5DADE2] hover:bg-[#3498DB] text-white font-bold py-3 rounded-lg transition shadow-lg"
-            >
-              登入系統
-            </button>
-          </form>
-        </div>
+      <div className="min-h-screen flex items-center justify-center bg-[#E5EDFD] p-4 font-sans">
+  {/* 📍 1. 卡片：改成白色背景，淡藍色邊框，更柔和的亮色陰影 */}
+  <div className="bg-white p-10 rounded-3xl shadow-xl max-w-sm w-full border border-[#DCE8FC]">
+    <div className="text-center mb-8">
+      {/* 📍 2. 圖示背景：改成極淡的藍色圓圈 */}
+      <div className="w-20 h-20 bg-[#F0F7FF] rounded-full flex items-center justify-center mx-auto mb-4 border border-[#E1EEFF]">
+        <span className="text-5xl block">🛡️</span>
       </div>
+      
+      {/* 📍 3. 標題與文字：改成深灰色，確保亮色背景下的清晰度 */}
+      <h1 className="text-2xl font-extrabold text-[#1A365D]">通識中心後台管理</h1>
+      <p className="text-gray-500 text-sm mt-2">請輸入管理員密碼以進入系統</p>
+    </div>
+    
+    <form onSubmit={handleLogin} className="space-y-5">
+      <div>
+        {/* 📍 4. 密碼輸入框：改成淡灰底、淡藍邊框、深色文字，並加強 focus 效果 */}
+        <input
+          type="password"
+          placeholder="••••••••"
+          value={passwordInput}
+          onChange={(e) => {
+            setPasswordInput(e.target.value);
+            setErrorMsg("");
+          }}
+          className="w-full bg-[#F7FAFC] border border-[#E2E8F0] rounded-xl px-4 py-4 text-[#1A365D] focus:outline-none focus:ring-2 focus:ring-[#3182CE] focus:bg-white focus:border-[#3182CE] transition-all text-center tracking-[0.5em] text-xl placeholder:tracking-normal placeholder:text-gray-300"
+          required
+          autoFocus
+        />
+        {/* 📍 5. 錯誤訊息：在白底上改成亮紅色，更好辨識 */}
+        {errorMsg && <p className="text-[#E53E3E] text-sm mt-2.5 text-center font-medium">{errorMsg}</p>}
+      </div>
+      
+      {/* 📍 6. 登入按鈕：改成符合藍白主題的深藍色按鈕 */}
+      <button 
+        type="submit"
+        className="w-full bg-[#3182CE] hover:bg-[#2B6CB0] text-white font-bold py-4 rounded-xl transition-all shadow-md hover:shadow-lg active:scale-95"
+      >
+        登入系統
+      </button>
+    </form>
+    
+    {/* 📍 7. 底部裝飾 (選配)：加一點版權或裝飾文字 */}
+    <p className="mt-8 text-center text-gray-400 text-xs">
+      國立聯合大學 通識教育中心
+    </p>
+  </div>
+</div>
     );
   }
 
   // ✅ 登入成功後，顯示原始的後台介面
   return (
-    <div className="flex min-h-screen font-sans text-gray-200" style={{ backgroundColor: "#121418" }}>
+    <div className="flex min-h-screen font-sans bg-[#F0F4F8] text-gray-700">
       
       {/* 📍 傳入年度切換功能給 Sidebar */}
+
       <Sidebar 
         currentYear={currentYear} 
         onYearChange={(year) => setCurrentYear(year)} 
       />
 
       <main className="flex-1 p-8 overflow-y-auto relative">
-        {/* 📍 新增的登出按鈕 */}
+        {/* 📍 2. 登出按鈕：改為白色小卡片樣式，懸停時變紅 */}
         <button 
           onClick={handleLogout}
-          className="absolute top-8 right-8 text-sm text-gray-400 hover:text-red-400 underline transition"
+          className="absolute top-8 right-8 text-sm font-medium text-gray-400 hover:text-red-600 bg-white px-4 py-2 rounded-lg shadow-sm border border-gray-200 transition-all active:scale-95"
         >
           登出管理員
         </button>
 
-        {/* 顯示目前管理年度標籤 */}
-        <div className="mb-4 inline-block bg-[#5DADE2]/10 text-[#5DADE2] px-3 py-1 rounded-full text-xs font-bold border border-[#5DADE2]/20">
-          📍 正在管理：{currentYear}
+        {/* 📍 3. 目前管理年度標籤：改為淡藍底、深藍字，增加呼吸燈感 */}
+        <div className="mb-6 inline-flex items-center gap-2 bg-[#E1EFFE] text-[#1E429F] px-4 py-1.5 rounded-full text-xs font-bold border border-[#BCDBFE] shadow-sm">
+          <span className="flex h-2 w-2 rounded-full bg-[#3182CE]"></span>
+          正在管理：{currentYear}
         </div>
 
         <DashboardHeader 
