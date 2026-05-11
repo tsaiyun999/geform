@@ -36,7 +36,7 @@ export const downloadApplicationsAsExcel = (applications: Application[], yearNam
       "校區": app.campus,
       "上課時間": app.time,
       "電腦教室": app.pc || '否',
-      "審核狀態": app.status
+      "教師類別": app.teacher_type || '未填寫'
     }));
   };
 
@@ -57,7 +57,7 @@ export const downloadApplicationsAsExcel = (applications: Application[], yearNam
   const wscols = [
     { wch: 6 }, { wch: 12 }, { wch: 15 }, { wch: 8 }, { wch: 10 },
     { wch: 15 }, { wch: 25 }, { wch: 12 }, { wch: 25 }, { wch: 20 },
-    { wch: 12 }, { wch: 10 }, { wch: 20 }, { wch: 10 }, { wch: 10 }
+    { wch: 12 }, { wch: 10 }, { wch: 20 }, { wch: 10 }, { wch: 25 }
   ];
   ws1['!cols'] = wscols;
   ws2['!cols'] = wscols;

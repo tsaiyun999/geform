@@ -6,7 +6,7 @@ export async function POST(request: Request) {
     // 1. 接收表單傳來的資訊
     const { email, teacher, course, year, id } = await request.json();
 
-    // 2. 建立 Gmail 發信通道 (讀取環境變數)
+     // 建立 Gmail 發信通道 (讀取環境變數)
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
@@ -17,7 +17,20 @@ export async function POST(request: Request) {
     rejectUnauthorized: false
     }
     });
-
+  /*  const transporter = nodemailer.createTransport({
+  host: "smtp.office365.com", // Outlook 的 SMTP 伺服器
+  port: 587,                  // 必須是 587
+  secure: false,              // port 587 需設為 false，之後會透過 STARTTLS 加密
+  auth: {
+    user: process.env.OUTLOOK_USER, // 你的 Outlook 帳號
+    pass: process.env.OUTLOOK_PASS, // 你的「應用程式密碼」
+  },
+  tls: {
+    ciphers: 'SSLv3',         // 有助於解決某些環境下的連線問題
+    rejectUnauthorized: false
+  }
+});
+*/
     // 3. 設定信件內容
     const mailOptions = {
       from: `"聯大通識中心" <${process.env.GMAIL_USER}>`, // 寄件人顯示名稱

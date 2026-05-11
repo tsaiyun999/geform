@@ -109,6 +109,7 @@ export default function CourseApplicationForm({ targetEditId }: FormProps) {
         pc: formData.get("pc") as string,
         phone: formData.get("phone") as string,
         email: formData.get("email") as string,
+        teacher_type: formData.get("teacher_type") as string, // 新增：取得教師類別資料
         submit_date: new Date().toISOString().split('T')[0],
         status: "審核中"
       };
@@ -132,7 +133,7 @@ export default function CourseApplicationForm({ targetEditId }: FormProps) {
       
       if (error) throw error;
 
-      // 📍 5. 寄信通知 (把確定有值的 currentAppId 傳過去)
+      // 📍 5. 寄信通知
       fetch("/api/send-email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -141,7 +142,7 @@ export default function CourseApplicationForm({ targetEditId }: FormProps) {
           teacher: applicationData.teacher,
           course: applicationData.course,
           year: applicationData.semester,
-          id: currentAppId // 這裡就不會報錯了！
+          id: currentAppId 
         }),
       }).catch(err => console.error("信件發送失敗:", err));
       
@@ -172,7 +173,6 @@ export default function CourseApplicationForm({ targetEditId }: FormProps) {
     <form id="courseForm" onSubmit={handleSubmit} className="space-y-4">
       <div className="form-group">
         <label className="label required">1. 授課教師姓名</label>
-        {/* 📍 使用 defaultValue 綁定舊資料 */}
         <input type="text" name="teacher" required placeholder="請詳答" defaultValue={initialData?.teacher} />
       </div>
 
@@ -261,7 +261,6 @@ export default function CourseApplicationForm({ targetEditId }: FormProps) {
       <div className="form-group">
         <label className="label required">10. 上課校區</label>
         <div className="radio-group">
-          {/* 📍 使用 defaultChecked 來還原選擇 */}
           <label className="radio-item"><input type="radio" name="campus" value="二坪校區" required defaultChecked={initialData?.campus === "二坪校區"} /> 二坪校區</label>
           <label className="radio-item"><input type="radio" name="campus" value="八甲校區" required defaultChecked={initialData?.campus === "八甲校區"} /> 八甲校區</label>
         </div>
@@ -283,6 +282,25 @@ export default function CourseApplicationForm({ targetEditId }: FormProps) {
       <div className="form-group">
         <label className="label required">13. 電子信箱 (E-MAIL)</label>
         <input type="email" name="email" required placeholder="請詳答" defaultValue={initialData?.email} />
+      </div>
+
+      {/* 📍 新增：14. 教師類別 */}
+      <div className="form-group">
+        <label className="label required">14. 教師類別</label>
+        <div className="radio-group" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <label className="radio-item">
+            <input type="radio" name="teacher_type" value="本校專任教師" required defaultChecked={initialData?.teacher_type === "本校專任教師"} /> 
+            本校專任教師
+          </label>
+          <label className="radio-item">
+            <input type="radio" name="teacher_type" value="續聘兼任教師(持續於本中心開課)" required defaultChecked={initialData?.teacher_type === "續聘兼任教師(持續於本中心開課)"} /> 
+            續聘兼任教師(持續於本中心開課)
+          </label>
+          <label className="radio-item">
+            <input type="radio" name="teacher_type" value="新聘兼任教師 (第一次申請開課)" required defaultChecked={initialData?.teacher_type === "新聘兼任教師 (第一次申請開課)"} /> 
+            新聘兼任教師 (第一次申請開課)
+          </label>
+        </div>
       </div>
 
       <button type="submit" className="btn-submit" disabled={isSubmitting}>
