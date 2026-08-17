@@ -175,6 +175,13 @@ export default function DashboardPage() {
             <span className="group-hover:rotate-12 transition-transform">📚</span>
             進入歷年資料管理庫
           </Link>
+          <Link 
+            href="/dashboard/form-manager" 
+            className="inline-flex items-center gap-1.5 bg-[#E6FFFA] text-[#2C7A7B] px-3 py-1.5 rounded-full text-xs font-bold border border-[#B2F5EA] shadow-sm hover:bg-[#B2F5EA] transition-all active:scale-95 group"
+          >
+            <span className="group-hover:rotate-12 transition-transform">📚</span>
+            進入表單內容管理
+          </Link>
 
           {/* 電腦版才顯示在這裡的按鈕區 (保持右對齊) */}
           <div className="hidden md:flex items-center gap-3 pl-2 border-l border-gray-200">
