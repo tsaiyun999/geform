@@ -22,14 +22,14 @@ export default function InstructionBox({ deadline }: InstructionBoxProps) {
         <li>
           <strong className="text-blue-700">新課程要求：</strong>
           若有新開設的課程，請於申請期限內寄送本校統一格式課程綱要至 
-          <a href="mailto:hsinhua@nuu.edu.tw" className="text-blue-500 underline mx-1">hsinhua@nuu.edu.tw</a>，
+          <a href="mailto:shihting0930@nuu.edu.tw" className="text-blue-500 underline mx-1">shihting0930@nuu.edu.tw</a>，
           新課程依規定須通過中心、共教會二級審查始得開課，格式請參閱附加檔案。
         </li>
         
         <li>
           <strong className="text-blue-700">新聘兼任教師需求：</strong>
           初次申請開課之兼任教師，請於申請期限內寄送國立聯合大學教師履歷表、教師提聘表、最高學歷證書影本、課程綱要至 
-          <a href="mailto:hsinhua@nuu.edu.tw" className="text-blue-500 underline mx-1">hsinhua@nuu.edu.tw</a>，
+          <a href="mailto:shihting0930@nuu.edu.tw" className="text-blue-500 underline mx-1">shihting0930@nuu.edu.tw</a>，
           新聘教師需經本校三級教評會審查通過始得聘任，相關格式請參閱附加檔案。
         </li>
         
