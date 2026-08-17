@@ -125,46 +125,73 @@ export default function DashboardPage() {
     );
   }
 
-  // ✅ 登入成功後，顯示完整的響應式後台介面 (全裝置皆採用漢堡選單)
+  // ✅ 登入成功後，顯示完整的響應式後台介面
   return (
-    <div className="flex h-screen font-sans bg-[#F0F4F8] text-gray-700 overflow-hidden">
+    <div className="flex h-screen font-sans bg-[#F0F4F8] text-gray-700 overflow-hidden relative">
       
       {/* =========================================
-          🌟 頂部導覽列 (全裝置顯示)
+          🌟 頂部導覽列 (全裝置顯示，支援自動換行)
       ========================================= */}
-      <div className="fixed top-0 left-0 right-0 h-16 bg-white border-b border-[#F1E4E8] flex items-center px-4 md:px-6 z-20 shadow-sm justify-between">
-        <div className="flex items-center gap-2">
-          <span className="w-2 h-6 bg-[#F9D5E5] rounded-full shadow-[0_0_8px_rgba(249,213,229,0.8)]"></span>
-          <span className="font-black text-[#604D53] tracking-wider text-lg md:text-xl">通識中心 開課表單後臺</span>
+      {/* 📍 使用 min-h-[4rem] 確保基本高度，同時允許 py-3 上下內距應對多行內容 */}
+      <div className="fixed top-0 left-0 right-0 bg-white border-b border-[#F1E4E8] z-20 shadow-sm px-4 md:px-6 py-3 min-h-[4rem] flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-4">
+        
+        {/* 上半部 (手機版)：標題 與 右側的登出/漢堡按鈕 */}
+        <div className="flex items-center justify-between w-full md:w-auto">
+          {/* 標題 */}
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-6 bg-[#F9D5E5] rounded-full shadow-[0_0_8px_rgba(249,213,229,0.8)] shrink-0"></span>
+            <span className="font-black text-[#604D53] tracking-wider text-base md:text-xl truncate">通識中心表單後臺</span>
+          </div>
+
+          {/* 右上角按鈕區 (手機版顯示在這裡，電腦版會利用 md:hidden 隱藏此區塊，並在下方顯示) */}
+          <div className="flex md:hidden items-center gap-2 shrink-0">
+            <button 
+              onClick={handleLogout}
+              className="text-xs font-medium text-gray-500 hover:text-red-600 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-200"
+            >
+              登出
+            </button>
+            <button
+              onClick={() => setIsSidebarOpen(true)}
+              className="p-1 text-[#604D53] hover:bg-[#F9D5E5] rounded-lg flex items-center justify-center"
+            >
+              <span className="text-2xl leading-none">☰</span>
+            </button>
+          </div>
         </div>
 
-        <div className=" inline-flex items-center gap-2 bg-[#E1EFFE] text-[#1E429F] px-4 py-1.5 rounded-full text-xs font-bold border border-[#BCDBFE] shadow-sm">
-          <span className="flex h-2 w-2 rounded-full bg-[#3182CE]"></span>
-          正在管理：{currentYear}
-        </div>
-        
-        <Link 
-          href="/dashboard/past-courses" 
-          className="ml-3 inline-flex items-center gap-2 bg-[#E6FFFA] text-[#2C7A7B] px-4 py-1.5 rounded-full text-xs font-bold border border-[#B2F5EA] shadow-sm hover:bg-[#B2F5EA] transition-all active:scale-95 group "
-        >
-          <span className="group-hover:rotate-12 transition-transform">📚</span>
-          進入歷年資料管理庫
-        </Link>
-        
-        {/* 右上角按鈕區：登出 + 漢堡選單 */}
-        <div className="flex items-center gap-3 md:gap-4">
-          <button 
-            onClick={handleLogout}
-            className="text-xs md:text-sm font-medium text-gray-500 hover:text-red-600 bg-gray-50 hover:bg-red-50 px-3 py-1.5 md:px-4 md:py-2 rounded-lg shadow-sm border border-gray-200 hover:border-red-200 transition-all active:scale-95"
+        {/* 下半部 (手機版) / 併入右側 (電腦版)：標籤與歷年資料庫按鈕 */}
+        <div className="flex flex-wrap items-center gap-2 md:gap-4 w-full md:w-auto">
+          
+          <div className="inline-flex items-center gap-1.5 bg-[#E1EFFE] text-[#1E429F] px-3 py-1.5 rounded-full text-xs font-bold border border-[#BCDBFE] shadow-sm">
+            <span className="flex h-2 w-2 rounded-full bg-[#3182CE]"></span>
+            正在管理：{currentYear}
+          </div>
+          
+          <Link 
+            href="/dashboard/past-courses" 
+            className="inline-flex items-center gap-1.5 bg-[#E6FFFA] text-[#2C7A7B] px-3 py-1.5 rounded-full text-xs font-bold border border-[#B2F5EA] shadow-sm hover:bg-[#B2F5EA] transition-all active:scale-95 group"
           >
-            登出
-          </button>
-          <button
-            onClick={() => setIsSidebarOpen(true)}
-            className="p-2 text-[#604D53] hover:bg-[#F9D5E5] rounded-lg transition-colors flex items-center justify-center"
-          >
-            <span className="text-2xl leading-none">☰</span>
-          </button>
+            <span className="group-hover:rotate-12 transition-transform">📚</span>
+            進入歷年資料管理庫
+          </Link>
+
+          {/* 電腦版才顯示在這裡的按鈕區 (保持右對齊) */}
+          <div className="hidden md:flex items-center gap-3 pl-2 border-l border-gray-200">
+            <button 
+              onClick={handleLogout}
+              className="text-sm font-medium text-gray-500 hover:text-red-600 bg-gray-50 hover:bg-red-50 px-4 py-2 rounded-lg shadow-sm border border-gray-200 hover:border-red-200 transition-all active:scale-95"
+            >
+              登出
+            </button>
+            <button
+              onClick={() => setIsSidebarOpen(true)}
+              className="p-2 text-[#604D53] hover:bg-[#F9D5E5] rounded-lg transition-colors flex items-center justify-center"
+            >
+              <span className="text-2xl leading-none">☰</span>
+            </button>
+          </div>
+
         </div>
       </div>
 
@@ -186,7 +213,7 @@ export default function DashboardPage() {
           ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}
         `}
       >
-        {/* 側邊欄右上角的「收回 (✕)」按鈕 (全裝置顯示) */}
+        {/* 側邊欄右上角的「收回 (✕)」按鈕 */}
         <div className="flex justify-end p-2 border-b border-[#F1E4E8] bg-[#FEFDFB]">
           <button 
             onClick={() => setIsSidebarOpen(false)} 
@@ -211,22 +238,8 @@ export default function DashboardPage() {
       {/* =========================================
           📄 主內容區塊 (資料管理面板)
       ========================================= */}
-      {/* 📍 pt-24 (96px)：因為上方導覽列固定佔據空間，這裡增加頂部內距避免內容被蓋住 */}
-      <main className="flex-1 overflow-y-auto relative pt-24 p-4 md:p-8 w-full">
-        
-        {/* 📍 目前管理年度標籤 */}
-        <div className="mb-6 inline-flex items-center gap-2 bg-[#E1EFFE] text-[#1E429F] px-4 py-1.5 rounded-full text-xs font-bold border border-[#BCDBFE] shadow-sm">
-          <span className="flex h-2 w-2 rounded-full bg-[#3182CE]"></span>
-          正在管理：{currentYear}
-        </div>
-        
-        <Link 
-          href="/dashboard/past-courses" 
-          className="ml-3 inline-flex items-center gap-2 bg-[#E6FFFA] text-[#2C7A7B] px-4 py-1.5 rounded-full text-xs font-bold border border-[#B2F5EA] shadow-sm hover:bg-[#B2F5EA] transition-all active:scale-95 group mb-6"
-        >
-          <span className="group-hover:rotate-12 transition-transform">📚</span>
-          進入歷年資料管理庫
-        </Link>
+      {/* 📍 pt-32 (128px)：因為手機版導覽列現在是兩排，內距加大確保不會蓋住下面的內容 */}
+      <main className="flex-1 overflow-y-auto relative pt-32 md:pt-24 p-4 md:p-8 w-full">
         
         <DashboardHeader 
           applicationsCount={applications.length} 
