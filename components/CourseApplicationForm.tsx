@@ -110,7 +110,8 @@ export default function CourseApplicationForm({ targetEditId }: FormProps) {
         phone: formData.get("phone") as string,
         email: formData.get("email") as string,
         teacher_type: formData.get("teacher_type") as string, // 新增：取得教師類別資料
-        submit_date: new Date().toISOString().split('T')[0],
+        // 產出格式例如: "2023/11/20 14:30:00"
+        submit_date: new Date().toLocaleString('zh-TW', { hour12: false }),
         status: "審核中"
       };
 

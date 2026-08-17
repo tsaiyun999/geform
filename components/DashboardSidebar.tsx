@@ -86,7 +86,7 @@ export default function DashboardSidebar({ currentYear, onYearChange }: SidebarP
         </button>
         
         <p className="mt-4 text-[10px] text-center text-[#C4B5B9] font-medium tracking-tighter">
-          國立聯合大學 通識教育中心 🍓
+          國立聯合大學 通識教育中心
         </p>
       </div>
     </aside>
