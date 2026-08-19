@@ -11,14 +11,13 @@ export default function CourseApplicationForm({ targetEditId }: FormProps) {
   const [activeYear, setActiveYear] = useState("116學年度"); 
   const [formFields, setFormFields] = useState<any[]>([]);
   const [formData, setFormData] = useState<Record<string, any>>({});
-  const [fileMap, setFileMap] = useState<Record<string, File>>({}); // 暫存上傳的檔案物件
+  const [fileMap, setFileMap] = useState<Record<string, File>>({}); 
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const initForm = async () => {
       try {
-        // 1. 抓取年度設定
         const { data: settings } = await supabase
           .from("system_settings")
           .select("year_name")
@@ -27,7 +26,6 @@ export default function CourseApplicationForm({ targetEditId }: FormProps) {
           .single();
         if (settings) setActiveYear(settings.year_name);
 
-        // 2. 從 Supabase 抓取管理者設定好的表單欄位
         const { data: fields, error: fieldError } = await supabase
           .from("form_fields")
           .select("*")
@@ -37,7 +35,6 @@ export default function CourseApplicationForm({ targetEditId }: FormProps) {
         if (fieldError) throw fieldError;
         setFormFields(fields || []);
 
-        // 3. 初始化預設值
         const initialValues: Record<string, any> = {
           day: "星期一",
           division: "日間部",
@@ -78,13 +75,11 @@ export default function CourseApplicationForm({ targetEditId }: FormProps) {
     setFormData((prev) => {
       const nextData = { ...prev, [fieldName]: value };
 
-      // 開設情形改變時，清空相依欄位
       if (fieldName === "status") {
         nextData.category = "";
         nextData.course_code = "";
       }
 
-      // 星期或部別改變時，重置時間預設值
       if (fieldName === "day" || fieldName === "division") {
         nextData.time = "第1-2節（ＡＭ）";
       }
@@ -115,11 +110,11 @@ export default function CourseApplicationForm({ targetEditId }: FormProps) {
     try {
       let updatedFormData = { ...formData };
 
-      // 📍 批次上傳檔案到 Supabase Storage
+      // 1. 批次上傳檔案到 Supabase Storage
       for (const [fieldName, file] of Object.entries(fileMap)) {
         const fileExt = file.name.split(".").pop();
-        const fileName = `${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`;
-        const filePath = `applications/${fileName}`;
+        const safeFileName = `${fieldName}_${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`;
+        const filePath = `${safeFileName}`; 
 
         const { error: uploadError } = await supabase.storage
           .from("uploads")
@@ -154,14 +149,38 @@ export default function CourseApplicationForm({ targetEditId }: FormProps) {
         }
       }
 
+      // 2. 嚴格過濾與對應寫入資料庫的欄位（加入 course 的多重防呆，確保絕對不會是 null）
       const applicationData: Record<string, any> = {
-        ...updatedFormData,
         teacher: inputTeacher,
-        time: inputTime,
+        semester: updatedFormData.semester,
+        course: updatedFormData.course || updatedFormData.course_zh || "未命名課程",
         course_code: updatedFormData.status === "曾開設課程" ? (updatedFormData.course_code || "").toUpperCase() : "無",
+        category: updatedFormData.category,
+        type: updatedFormData.status,
+        campus: updatedFormData.campus,
+        division: updatedFormData.division || "日間部",
+        time: inputTime,
+        pc: updatedFormData.pc,
+        phone: updatedFormData.phone,
+        email: updatedFormData.email,
+        teacher_type: updatedFormData.teacher_type,
         submit_date: new Date().toLocaleString('zh-TW', { hour12: false }),
-        status: "審核中"
+        status: "審核中",
+        // 動態帶入檔案欄位（對應 16-20 題的 field_name）
+        ...Object.keys(fileMap).reduce((acc, key) => {
+          if (updatedFormData[key]) acc[key] = updatedFormData[key];
+          return acc;
+        }, {} as Record<string, any>)
       };
+
+      // 確保在編輯模式下也能保留原有的檔案網址
+      if (targetEditId) {
+        for (const key of Object.keys(updatedFormData)) {
+          if (key.startsWith("file_") && updatedFormData[key]) {
+            applicationData[key] = updatedFormData[key];
+          }
+        }
+      }
 
       let error;
       let currentAppId = targetEditId;
@@ -179,13 +198,14 @@ export default function CourseApplicationForm({ targetEditId }: FormProps) {
       
       if (error) throw error;
 
+      // 3. 發送確認信
       fetch("/api/send-email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email: applicationData.email,
           teacher: applicationData.teacher,
-          course: applicationData.course_zh, // 寄信用中文課程名稱
+          course: applicationData.course, 
           year: applicationData.semester,
           id: currentAppId 
         }),
@@ -215,7 +235,6 @@ export default function CourseApplicationForm({ targetEditId }: FormProps) {
       {formFields.map((field) => {
         const value = formData[field.field_name] ?? "";
 
-        // 條件顯示判斷
         if (field.conditional_field) {
           const parentValue = formData[field.conditional_field];
           if (parentValue !== field.conditional_value) {
@@ -229,7 +248,6 @@ export default function CourseApplicationForm({ targetEditId }: FormProps) {
               <label className={`label ${field.required ? "required" : ""}`}>
                 {field.label}
               </label>
-              {/* 如果後台有設定該題目的空白格式下載連結，則顯示下載按鈕 */}
               {field.template_url && (
                 <a
                   href={field.template_url}
@@ -243,7 +261,6 @@ export default function CourseApplicationForm({ targetEditId }: FormProps) {
               )}
             </div>
 
-            {/* 1. 文字輸入框 (含中英文課程名稱、教師姓名、手機、代碼等) */}
             {field.field_type === "text" && (
               <input
                 type="text"
@@ -257,7 +274,6 @@ export default function CourseApplicationForm({ targetEditId }: FormProps) {
               />
             )}
 
-            {/* 2. 電子信箱 */}
             {field.field_type === "email" && (
               <input
                 type="email"
@@ -269,7 +285,6 @@ export default function CourseApplicationForm({ targetEditId }: FormProps) {
               />
             )}
 
-            {/* 3. 下拉選單 (支援動態學期、課程類別、星期、上課時間等) */}
             {field.field_type === "select" && (
               <select
                 name={field.field_name}
@@ -279,7 +294,7 @@ export default function CourseApplicationForm({ targetEditId }: FormProps) {
                 disabled={field.field_name === "category" && formData.status === ""}
               >
                 <option value="" disabled>
-                  {field.field_name === "category" && formData.status === "" ? "請先選擇上方的「開設情形」" : "請選擇"}
+                  {field.field_name === "category" && formData.status === "" ? "請先選擇上方的開設情形" : "請選擇"}
                 </option>
 
                 {field.options?.map((opt: string, idx: number) => {
@@ -301,7 +316,7 @@ export default function CourseApplicationForm({ targetEditId }: FormProps) {
                   <>
                     <option value="第1-2節（ＡＭ）">第1-2節（ＡＭ）</option>
                     <option value="第3-4節（ＡＭ）">第3-4節（ＡＭ）</option>
-                    {formData.day !== "星期三" && <option value="第5-6節（PＭ）">第5-6節（PＭ）</option>}
+                    {formData.day !== "星期三" && <option value="第5-6節（P મ）">第5-6節（PＭ）</option>}
                     <option value="第7-8節（PＭ）">第7-8節（PＭ）</option>
                     <option value="第8-9節（PM）">第8-9節（PＭ）</option>
                     {formData.division === "進修部" && (
@@ -315,7 +330,6 @@ export default function CourseApplicationForm({ targetEditId }: FormProps) {
               </select>
             )}
 
-            {/* 4. 單選按鈕 */}
             {field.field_type === "radio" && (
               <div className="radio-group" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {field.options?.map((opt: string, idx: number) => (
@@ -334,7 +348,6 @@ export default function CourseApplicationForm({ targetEditId }: FormProps) {
               </div>
             )}
 
-            {/* 5. 檔案上傳 (支援 15 至 19 題) */}
             {field.field_type === "file" && (
               <div className="mt-1">
                 <input

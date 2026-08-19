@@ -3,12 +3,14 @@
 import React, { useState } from "react";
 import Sidebar from "@/components/DashboardSidebar";
 import DashboardHeader from "@/components/DashboardHeader";
-import ApplicationTable from "@/components/ApplicationTable";
+import ApplicationTable, { Application } from "@/components/ApplicationTable";
 import { downloadApplicationsAsExcel } from "@/utils/excelHelper";
 import { useSystemSettings } from "@/hooks/useSystemSettings"; 
 import { useApplications } from "@/hooks/useApplications";    
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import JSZip from "jszip";
+import { saveAs } from "file-saver";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -28,7 +30,6 @@ export default function DashboardPage() {
     updateApplicationStatus 
   } = useApplications(currentYear);
 
-  // 📍 處理登出邏輯 (清除狀態並重整)
   const handleLogout = () => {
     sessionStorage.removeItem("adminAuth");
     window.location.reload(); 
@@ -36,6 +37,53 @@ export default function DashboardPage() {
 
   const handleDownloadExcel = () => {
     downloadApplicationsAsExcel(applications, currentYear);
+  };
+
+  // 📍 新增：將指定老師的所有上傳檔案打包成 ZIP 下載
+  const handleDownloadTeacherFiles = async (app: Application) => {
+    try {
+      const zip = new JSZip();
+      const folderName = app.teacher ? `${app.teacher}_上傳資料` : "老師上傳資料";
+      const folder = zip.folder(folderName);
+
+      // 收集所有可能的檔案欄位 (包含你新增的 16-20 題)
+      const fileUrls = [
+        app.file_proposal,
+        app.file_resume,
+        app.file_degree,
+        app.file_syllabus,
+        app.file_extra
+      ].filter(Boolean); // 過濾掉空值
+
+      if (fileUrls.length === 0) {
+        alert("⚠️ 這位老師沒有上傳任何檔案！");
+        return;
+      }
+
+      alert(`📦 正在打包 ${app.teacher} 的檔案，請稍候...`);
+
+      // 逐一抓取檔案並放入 ZIP 資料夾
+      for (const url of fileUrls) {
+        try {
+          const response = await fetch(url as string);
+          const blob = await response.blob();
+          // 從網址中解析出原檔名
+          const rawFileName = (url as string).split("/").pop()?.split("?")[0] || "file.docx";
+          // 嘗試解碼中文檔名（如果有的話）
+          const fileName = decodeURIComponent(rawFileName);
+          folder?.file(fileName, blob);
+        } catch (err) {
+          console.error("下載單一檔案失敗:", url, err);
+        }
+      }
+
+      // 生成 ZIP 並觸發瀏覽器下載
+      const content = await zip.generateAsync({ type: "blob" });
+      saveAs(content, `${folderName}.zip`);
+    } catch (error) {
+      console.error("打包失敗:", error);
+      alert("❌ 檔案打包下載失敗，請稍後再試！");
+    }
   };
 
   return (
@@ -149,10 +197,12 @@ export default function DashboardPage() {
           updateSchedule={() => updateSchedule(startDate, endDate)}
         />
 
+        {/* 📍 將 handleDownloadTeacherFiles 傳入表格元件中 */}
         <ApplicationTable 
           applications={applications} 
           handleStatusChange={updateApplicationStatus} 
           handleDelete={deleteApplication} 
+          onDownloadZip={handleDownloadTeacherFiles}
         />
       </main>
 

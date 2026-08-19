@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 
 export interface Application {
   id: number;
@@ -14,24 +14,32 @@ export interface Application {
   division: string;
   campus: string;
   time: string;
-  pc: string;       
-  phone: string;    
-  email: string;    
+  pc: string;         
+  phone: string;      
+  email: string;      
   submit_date: string; 
   created_at?: string;
   status: string;
+  // 📍 新增檔案欄位支援
+  file_proposal?: string;
+  file_resume?: string;
+  file_degree?: string;
+  file_syllabus?: string;
+  file_extra?: string;
 }
 
 interface ApplicationTableProps {
   applications: Application[];
   handleStatusChange: (id: number, currentStatus: string) => void;
   handleDelete: (id: number) => void;
+  onDownloadZip: (app: Application) => void; // 📍 新增打包下載的傳入屬性
 }
 
 export default function ApplicationTable({
   applications,
   handleStatusChange,
-  handleDelete
+  handleDelete,
+  onDownloadZip
 }: ApplicationTableProps) {
 
   // 📝 處理日期與時間格式化的小幫手
@@ -40,7 +48,6 @@ export default function ApplicationTable({
 
     const date = new Date(dateString);
     
-    // 如果傳入的字串無法被解析為有效日期，則直接回傳原字串
     if (isNaN(date.getTime())) {
       return <span>{dateString}</span>;
     }
@@ -49,10 +56,8 @@ export default function ApplicationTable({
     const mm = String(date.getMonth() + 1).padStart(2, '0');
     const dd = String(date.getDate()).padStart(2, '0');
     
-    // 🔍 判斷原本的字串有沒有包含時間資訊 (通常會有 ":" 或 "T")
     const hasTimeInfo = dateString.includes(':') || dateString.toUpperCase().includes('T');
 
-    // 如果沒有時間資訊，就只顯示日期
     if (!hasTimeInfo) {
       return (
         <div className="flex flex-col gap-0.5">
@@ -62,7 +67,6 @@ export default function ApplicationTable({
       );
     }
 
-    // 如果有時間資訊，才去抓小時跟分鐘
     const hh = String(date.getHours()).padStart(2, '0');
     const min = String(date.getMinutes()).padStart(2, '0');
 
@@ -104,7 +108,6 @@ export default function ApplicationTable({
               applications.map((app) => (
                 <tr key={app.id} className="even:bg-gray-50 odd:bg-white hover:bg-[#F0F9FF] transition-colors">
                   
-                  {/* 📍 優先讀取資料庫產生的 created_at，如果沒有才退回使用 submit_date */}
                   <td className="px-5 py-4 text-xs whitespace-nowrap border-r border-gray-100 align-middle">
                     {formatDateTime(app.created_at || app.submit_date)}
                   </td>
@@ -155,7 +158,22 @@ export default function ApplicationTable({
                   </td>
 
                   <td className="px-5 py-4 text-center align-middle">
-                    <button onClick={() => handleDelete(app.id)} className="rounded-lg bg-[#FFF5F5] px-4 py-2 text-sm font-medium text-[#C53030] hover:bg-[#FED7D7] border border-[#FEB2B2] transition-colors shadow-sm">刪除</button>
+                    <div className="flex flex-col gap-2 items-center">
+                      {/* 📍 新增：打包下載按鈕 */}
+                      <button 
+                        onClick={() => onDownloadZip(app)} 
+                        className="w-full rounded-lg bg-[#E6FFFA] px-3 py-1.5 text-xs font-semibold text-[#2C7A7B] hover:bg-[#B2F5EA] border border-[#319795] transition-colors shadow-sm"
+                      >
+                        📥 打包下載
+                      </button>
+
+                      <button 
+                        onClick={() => handleDelete(app.id)} 
+                        className="w-full rounded-lg bg-[#FFF5F5] px-3 py-1.5 text-xs font-medium text-[#C53030] hover:bg-[#FED7D7] border border-[#FEB2B2] transition-colors shadow-sm"
+                      >
+                        刪除
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))
@@ -167,3 +185,4 @@ export default function ApplicationTable({
     </div>
   );
 }
+
