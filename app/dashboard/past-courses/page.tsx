@@ -5,17 +5,14 @@ import { supabase } from "@/utils/supabase";
 import ExcelImporter from "@/components/ExcelImporter";
 
 export default function PastCoursesManager() {
-  // 🔐 登入防護狀態
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [passwordInput, setPasswordInput] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
   const [isCheckingSession, setIsCheckingSession] = useState(true);
 
-  // 📊 資料列表狀態
   const [list, setList] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // 📍 1. 驗證與 Session 檢查
   useEffect(() => {
     const isLogged = sessionStorage.getItem("adminAuth") === "true";
     if (isLogged) setIsAuthenticated(true);
@@ -34,7 +31,6 @@ export default function PastCoursesManager() {
     }
   };
 
-  // 📍 2. 資料抓取邏輯
   const fetchData = async () => {
     setLoading(true);
     const { data, error } = await supabase
@@ -66,10 +62,8 @@ export default function PastCoursesManager() {
     if (!error) fetchData();
   };
 
-  // 🔒 檢查狀態中
   if (isCheckingSession) return <div className="min-h-screen bg-[#FFF5F7]"></div>;
 
-  // 🔒 顯示馬卡龍登入畫面
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#FFF5F7] p-4 font-sans">
@@ -101,7 +95,6 @@ export default function PastCoursesManager() {
     );
   }
 
-  // ✅ 驗證成功：顯示管理介面
   return (
     <div className="p-10 bg-[#FEFDFB] min-h-screen text-[#604D53] font-sans">
       <div className="mb-10 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
@@ -122,14 +115,8 @@ export default function PastCoursesManager() {
       <div className="rounded-[2.5rem] border border-[#D0EFFF] bg-white shadow-xl overflow-hidden">
         <table className="w-full text-left text-sm">
           <thead className="bg-[#F0F9FF] text-[#1A365D]">
-            <tr>
-              <th className="p-6 font-black">學年度</th> {/* 📍 新增學年度標頭 */}
-              <th className="p-6 font-black">教師姓名</th>
-              <th className="p-6 font-black">課程類別</th>
-              <th className="p-6 font-black">課程名稱</th>
-              <th className="p-6 font-black">科目代碼</th>
-              <th className="p-6 text-center font-black">管理</th>
-            </tr>
+            {/* 📍 確保 <tr> 內部沒有換行或註解 */}
+            <tr><th className="p-6 font-black">學年度</th><th className="p-6 font-black">教師姓名</th><th className="p-6 font-black">課程類別</th><th className="p-6 font-black">課程名稱</th><th className="p-6 font-black">科目代碼</th><th className="p-6 text-center font-black">管理</th></tr>
           </thead>
           <tbody className="divide-y divide-[#E1EFFE]">
             {loading ? (
@@ -138,28 +125,8 @@ export default function PastCoursesManager() {
               <tr><td colSpan={6} className="p-20 text-center text-[#8A767C]">目前沒有任何歷年資料，請透過上方上傳 Excel 檔案。✨</td></tr>
             ) : (
               list.map((item) => (
-                <tr key={item.id} className="hover:bg-[#FFFBEB] transition-colors">
-                  <td className="p-6">
-                    <span className="bg-[#FFFBEB] text-[#D69E2E] px-3 py-1 rounded-full text-xs font-bold border border-[#FEFCBF]">
-                      {item.academic_year || "未註明"}
-                    </span>
-                  </td> {/* 📍 新增學年度內容欄位 */}
-                  <td className="p-6 font-bold">{item.teacher_name}</td>
-                  <td className="p-6">
-                    <span className="bg-[#FFF0F3] text-[#A66170] px-3 py-1 rounded-full text-xs font-bold border border-[#F9D5E5]">
-                      {item.course_category}
-                    </span>
-                  </td>
-                  <td className="p-6 font-medium">{item.course_name}</td>
-                  <td className="p-6">
-                    <span className="bg-[#EBF8FF] text-[#2B6CB0] px-4 py-2 rounded-xl border border-[#BEE3F8] font-mono font-black">
-                      {item.course_code}
-                    </span>
-                  </td>
-                  <td className="p-6 text-center">
-                    <button onClick={() => handleDelete(item.id)} className="text-[#FF9E7D] font-bold hover:underline">移除</button>
-                  </td>
-                </tr>
+                /* 📍 確保每列的 <tr> 與其內部的 <td> 緊密相連，中間絕不換行 */
+                <tr key={item.id} className="hover:bg-[#FFFBEB] transition-colors"><td className="p-6"><span className="bg-[#FFFBEB] text-[#D69E2E] px-3 py-1 rounded-full text-xs font-bold border border-[#FEFCBF]">{item.academic_year || "未註明"}</span></td><td className="p-6 font-bold">{item.teacher_name}</td><td className="p-6"><span className="bg-[#FFF0F3] text-[#A66170] px-3 py-1 rounded-full text-xs font-bold border border-[#F9D5E5]">{item.course_category}</span></td><td className="p-6 font-medium">{item.course_name}</td><td className="p-6"><span className="bg-[#EBF8FF] text-[#2B6CB0] px-4 py-2 rounded-xl border border-[#BEE3F8] font-mono font-black">{item.course_code}</span></td><td className="p-6 text-center"><button onClick={() => handleDelete(item.id)} className="text-[#FF9E7D] font-bold hover:underline">移除</button></td></tr>
               ))
             )}
           </tbody>
