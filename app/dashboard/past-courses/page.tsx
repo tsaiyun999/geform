@@ -123,6 +123,7 @@ export default function PastCoursesManager() {
         <table className="w-full text-left text-sm">
           <thead className="bg-[#F0F9FF] text-[#1A365D]">
             <tr>
+              <th className="p-6 font-black">學年度</th> {/* 📍 新增學年度標頭 */}
               <th className="p-6 font-black">教師姓名</th>
               <th className="p-6 font-black">課程類別</th>
               <th className="p-6 font-black">課程名稱</th>
@@ -132,10 +133,17 @@ export default function PastCoursesManager() {
           </thead>
           <tbody className="divide-y divide-[#E1EFFE]">
             {loading ? (
-              <tr><td colSpan={5} className="p-20 text-center animate-pulse">同步中... 🍦</td></tr>
+              <tr><td colSpan={6} className="p-20 text-center animate-pulse">同步中... 🍦</td></tr>
+            ) : list.length === 0 ? (
+              <tr><td colSpan={6} className="p-20 text-center text-[#8A767C]">目前沒有任何歷年資料，請透過上方上傳 Excel 檔案。✨</td></tr>
             ) : (
               list.map((item) => (
                 <tr key={item.id} className="hover:bg-[#FFFBEB] transition-colors">
+                  <td className="p-6">
+                    <span className="bg-[#FFFBEB] text-[#D69E2E] px-3 py-1 rounded-full text-xs font-bold border border-[#FEFCBF]">
+                      {item.academic_year || "未註明"}
+                    </span>
+                  </td> {/* 📍 新增學年度內容欄位 */}
                   <td className="p-6 font-bold">{item.teacher_name}</td>
                   <td className="p-6">
                     <span className="bg-[#FFF0F3] text-[#A66170] px-3 py-1 rounded-full text-xs font-bold border border-[#F9D5E5]">

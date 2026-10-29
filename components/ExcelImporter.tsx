@@ -27,7 +27,6 @@ export default function ExcelImporter({ onUploadSuccess }: { onUploadSuccess: ()
         // 📍 強化版格式化邏輯
         const formattedData = data.map((row: any) => {
           // 定義一個內部函式來尋找標題
-          // keywords：我們接受的各種可能標題名稱
           const findValue = (keywords: string[]) => {
             const key = Object.keys(row).find(k => 
               keywords.some(kw => 
@@ -39,6 +38,7 @@ export default function ExcelImporter({ onUploadSuccess }: { onUploadSuccess: ()
           };
 
           return {
+            academic_year: findValue(["學年度", "學年", "學期"]), // 📍 新增學年度對應
             teacher_name: findValue(["教師", "姓名"]),
             course_category: findValue(["類別", "課程類別"]),
             course_name: findValue(["名稱", "課程名稱"]),
@@ -47,7 +47,7 @@ export default function ExcelImporter({ onUploadSuccess }: { onUploadSuccess: ()
         }).filter(item => item.teacher_name && item.course_code); // 只要有姓名跟代碼就匯入
 
         if (formattedData.length === 0) {
-          alert("Excel 內容格式不符，請檢查第一列的標題是否正確！🍬\n需要包含：教師姓名、課程類別、課程名稱、科目代碼");
+          alert("Excel 內容格式不符，請檢查第一列的標題是否正確！🍬\n需要包含：學年度、教師姓名、課程類別、課程名稱、科目代碼");
           setIsImporting(false);
           return;
         }
@@ -85,7 +85,7 @@ export default function ExcelImporter({ onUploadSuccess }: { onUploadSuccess: ()
             {isImporting ? "正在餵食雲端資料..." : "點擊或拖曳 Excel 檔案至此"}
           </p>
           <p className="text-[#8A767C] text-xs mt-2 font-medium">
-            請確保標題列在第一行，包含：教師姓名、課程類別、課程名稱、科目代碼
+            請確保標題列在第一行，包含：學年度、教師姓名、課程類別、課程名稱、科目代碼
           </p>
         </div>
         
