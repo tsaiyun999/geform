@@ -24,8 +24,16 @@ export default function CourseQuery() {
 
     if (error) {
       alert("連線出錯，請稍後再試 ");
+      setResult(null);
     } else if (data && data.length > 0) {
-      setResult(data);
+      // 📍 前端去重：以「學年度 + 科目代碼」作為唯一鍵值，過濾掉完全重複的資料
+      const uniqueData = Array.from(
+        new Map(
+          data.map(item => [`${item.academic_year}-${item.course_code}`, item])
+        ).values()
+      );
+
+      setResult(uniqueData);
     } else {
       alert("查無此教師的紀錄，請確認姓名是否正確 ");
       setResult(null);
